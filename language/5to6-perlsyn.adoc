@@ -1,6 +1,8 @@
 = 5to6-perlsyn
 :toc-title: 目录
 
+Perl 5 to Perl 6 指南  - 语法
+
 perlsyn - Perl syntax
 
 == 描述
