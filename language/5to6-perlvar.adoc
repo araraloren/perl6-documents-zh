@@ -1,0 +1,415 @@
+= 5to6-perlvar
+:toc-title: 目录
+
+Perl 5 to Perl 6 指南 - 特殊变量
+
+== 描述
+
+一个 Perl 5 中的特殊变量及其在 Perl 6中的等效变量的完整列表（希望如此），并在必要时对两
+者之间注释。
+
+== 注意
+
+我将不会解释 Perl 6变量的完整用法，这个文档意在尝试引导你从 Perl 5特殊变量过度到 Perl 6
+的等价变量。
+关于 Perl 6特殊变量的全部文档，请参考关于它们的 Perl 6文档。
+
+== 特殊变量
+
+=== 一般变量
+
+* $ARG
+* $_
+
+感谢，`$_`还是像 Perl 5中那样是一般默认变量，在 Perl 6中的主要不同就是你现在可以调用它的方法。
+例如， Perl 5中的`say $_`在 Perl 6中可以是`$_.say`。
+而且，由于它是默认变量，你甚至不需要使用变量名字，前面的例子使用`.say`同样可以完成。
+
+* @ARG
+* @_
+
+因为 Perl 6现在有了函数签名（function signatures），你的参数都去了那里，而不需要依赖`@_`。
+实际上，如果你使用函数签名，对`@_`的使用将会告诉你无法覆盖已经存在的签名。
+
+然而，如果你没有使用函数签名，`@_`将会像 Perl 5那样包含你传递给函数的实参。
+再一次，对于`$_`，你可以在它上面调用方法。
+不像`$_`，你无法把`@_`视为默认变量并在它上面调用方法，也就是，`@_.shift`可以工作，
+`.shift`不行。
+
+* $LIST_SEPARATOR
+* $"
+
+目前，Perl 6中并没有列表分隔符的等价变量。
+设计文档 S28说并没有这样一个变量，所以你可能不要报太大希望。
+
+* $PROCESS_ID
+* $PID
+* $$
+
+在 Perl 6中，`$$`被`$*PID`取代。
+
+* $PROGRAM_NAME
+* $0
+
+你可以通过 Perl 6中的`$*PROGRAM-NAME`访问到程序的名字。
+
+NOTE: `$0`在 Perl 6中包含了匹配结果的第一个捕获（即捕获变量现在从`$0`开始而不是`$1`）
+
+* $REAL_GROUP_ID
+* $GID
+* $(
+
+当前组编号（real group id）现在通过`$*GROUP.Numeric`提供，`$*GROUP.Str`返回组名，而
+不是它的编号。
+
+* $EFFECTIVE_GROUP_ID
+* $EGID
+* $)
+
+目前，Perl 6似乎并不支持获取有效组编号（effective group id)。
+
+* $REAL_USER_ID
+* $UID
+* $<
+
+当前用户编号（real user id）现在通过`$*USER.Numeric`提供，`$*USER.Str`返回用户名，而
+不是它的编号。
+
+* $EFFECTIVE_USER_ID
+* $EUID
+* $>
+
+目前，Perl 6似乎并不支持获取有效用户编号（effective user id)。
+
+* $SUBSCRIPT_SEPARATOR
+* $SUBSP
+* $;
+
+Perl 6中没有下标分隔符变量（subscript separator variable)，如果你的 Perl 5代码正在使
+用它，那代码几乎肯定是非常老了。
+
+* $a
+* $b
+
+`$a`和`$b`在 Perl 6中没有特殊的含义，`sort()`并不区别对待它们，它们只是很普通的变量。
+
+此功能被扩展为更加通用的占位符参数，占位符变量使用魔符`^`声明
+（
+比如`$^z`，它们可以在裸露块或者一个没有显式参数列表的子例程内使用。
+参数将会以 Unicode 顺序赋值给相应的占位符变量，也就是说即使变量在块内以`($^q, $^z, $^a)`
+形式出现，它们被赋值的顺序将会是`($^a, $^q, $^z)`
+）。因此：
+[source, perl6]
+----------------------------
+sort { $^a cmp $^z }, 1, 5, 6, 4, 2, 3;
+# (1 2 3 4 5 6)
+sort { $^g cmp $^z }, 1, 5, 6, 4, 2, 3;
+# (6 5 4 3 2 1)
+for 1..9 { say $^c, $^a, $^b; last}
+# 312
+----------------------------
+想更详细了解占位符变量，请参考 https://docs.perl6.org/language/variables#The_%5E_Twigil[this page]
+
+* %ENV
+
+`%ENV`已经被`$*ENV`取代了，注意这个哈希的键可能不同于 Perl 5中的。
+在写下本文时，唯一的不同似乎是`OLDPWD`并没有出现在 Perl 6的`%*ENV`中。
+
+* $OLD_PERL_VERSION
+* $]
+
+Perl 的版本已经被`$*PERL.vesion`取代，对于“6.b”版本的beta版，`$*PERL`中会包括“Perl 6(6.b)”。
+
+* $SYSTEM_FD_MAX
+* $^F
+
+虽然设计文档（S28）表明将会变成`$*SYS_FD_MAX`，但现在并没有实现。
+
+* @F
+
+[需要更多探究] 在这一点上有点混乱，设计文档 S28 表明 Perl 5中的`@F`被`@_`取代，但是目前
+并不清楚它如何工作。
+另一方面，目前有一些有争议的问题，Perl 5到 Perl 6的迁移文档表明**rakudo**还没有实现选项`-a`和`-F`。
+
+* @INC
+
+在 Perl 6中已经不存在了，请使用“use lib”控制需要搜索的模块仓库路径。
+与`@INC`最接近的只有`$*REPO`了，但是因为 Perl 6的预编译功能，它和`@INC`的工作方式完全不同。
+[source, perl6]
+----------------------------
+# 打印编译模块仓库的列表
+.say for $*REPO.repo-chain;
+----------------------------
+
+* %INC
+
+在 Perl 6中不在存在，因为每一个仓库负责记住哪些模块已经加载了。
+你可以获取所有加载模块（编译单元）的列表，像这样：
+[source, perl6]
+----------------------------
+use Test;
+use MyModule;
+say flat $*REPO.repo-chain.map(*.loaded); # -> (MyModule Test)
+----------------------------
+
+* $INPLACE_EDIT
+* $^I
+
+S28推荐使用`$*INPLACE_EDIT`，但它现在还不存在。
+
+* $^M
+
+S28推荐使用`$*EMERGENCY_MEMORY`，但它现在还不存在。
+
+* $OSNAME
+* $^O
+
+这个有点不清楚，这可能取决于你对“操作系统的名称”如何理解，S28有三种不同的建议，并且对应的
+有三种不同的答案。在我的 OS X 机器上。。。
+[source, perl6]
+----------------------------
+say $*KERNEL;   # 输出 "darwin (14.3.0)"
+say $*DISTRO;   # 输出 "macosx (10.10.3)"
+----------------------------
+
+在任何一个变量上使用调用`.version`将会返回版本号，`.name`将会是内核或者发行版的名字。
+这些对象还包含了其它的信息。
+
+S28还列出了`$*VM`（我的rakudo star目前给出的是“moar (2015.5.63.ge.7.a.473.c)”），但
+我不清楚 VM 跟操作系统是如何关联的。
+
+* %SIG
+
+[需要更多探究]没有等价的变量，S28表明此功能现在由 Perl 6 中的事件过滤器（event filters）
+以及异常转换（exception translation）处理。
+
+* $BASETIME
+* $^T
+
+被 Perl 6中的`$*INITTIME`取代。
+不像 Perl 5，它不是从新纪元开始的秒数，而是一个`Instant`对象，使用以原子秒为单位的小数表示。
+
+* $PERL_VERSION
+* $^V
+
+正如`$]`一样，它现在被`$*PERL.version`取代了。
+
+* ${^WIN32_SLOPPY_STAT}
+
+在 Perl 6中没有类似的东西。
+
+* $EXECUTABLE_NAME
+* $^X
+
+它被`$*EXECUTABLE-NAME`取代了。
+注意它在 Perl 6中是一个`IO`对象，所以使用`~$*EXECUTABLE-NAME`将会得到一个接近于 Perl 5
+实现的`Str`。
+
+=== 与正则表达式相关的变量
+
+==== 性能问题
+
+就像上面描述的，`$``、`$&`以及`$'`在 Perl 6中已经不存在了。
+主要被`$/`的变体取代，随着它们的消除， Perl 5中相关的性能问题不再适用。
+
+* $<digits> ($1, $2, ...)
+
+这些在 Perl 6中也存在的变量和 Perl 5中的功能一样，除了它们现在从`$0`开始而不是`$1`。
+此外，它们是匹配变量`$/`的下标项的同义词，也就是，`$0`等价于`$/[0]`，`$1`等价于`$/[1]`，
+以此类推。
+
+* $MATCH
+* $&
+
+`$/`现在包含着匹配的对象，所以 Perl 5中`$&`的行为可以对它字符串化来获得，即`~$/`。
+`$/.Str`也会奏效，但是`~$/`是更常用的范式。
+
+* ${^MATCH}
+
+因为前述的性能问题已经不再存在了，所以这个变量在 Perl 6中不再使用了。
+
+* $PERMATCH
+* $`
+
+被`$/.prematch`取代。
+
+* ${^PREMATCH}
+
+因为前述的性能问题已经不再存在了，所以这个变量在 Perl 6中不再使用了。
+
+* $POSTMATCH
+* $'
+
+被`$/.postmatch`取代。
+
+* ${^POSMATCH}
+
+因为前述的性能问题已经不再存在了，所以这个变量在 Perl 6中不再使用了。
+
+* $LAST_PAREN_MATCH
+* $+
+
+在 Perl 6中不再存在，但是你可以通过使用`$/[* - 1].Str`（`$/[* - 1]`将会是匹配对象，
+而不是实际的字符串）获取相同的信息。
+
+如果你想要__理解__它是如何工作的，你可以参考这些文档：
+
+link:++https://docs.perl6.org/routine/[%20]#language_documentation_operator++[++[]routine++]
+
+https://docs.perl6.org/type/Whatever[Whatever]
+
+。。。也许还有
+
+https://design.perl6.org/S02.html#line_1126
+
+。。。虽然设计文档并不总是最新的。
+
+* $LAST_SUBMATCH_RESULT
+* $^N
+
+S28建议使用`$*MOST_RECENT_CAPTURED_MATCH`，但是现在并没有任何实现变量与`$^N`相符合。
+
+* @LAST_MATCH_END
+* @+
+
+如同大多数跟正则表达式相关的变量一样，这个函数功能或者至少一部分，由 Perl 6中的变量`$/`提供。
+或者，在这种情况下，数字变量是它的下标对象的别名，偏移可以使用`.to`方法得到，即第一个偏移是`$/[0].to`，
+它的同义词是`$0.to`，Perl 5提供的`$+[0]`由`$/.to`提供。
+
+* %LAST_PAREN_MATCH
+* %+
+
+再次，我们将它移动到了`$/`中，以前的`$+{match}`现在是`$/{match}`。
+
+* @LAST_MATCH_START
+* @-
+
+类似于使用`.to`方法取代`@+`，`@-`被`$/`以及它的变种的`.from`方法取代。
+第一个偏移`$/[0].from`等价于`$0.from`，Perl 5中的`$-[0]`现在是`$/.from`。
+
+* %LAST_MATCH_START
+* %-
+
+类似于`%+`，`%-{match}`的可以被`$/{match}`取代。
+
+* $LAST_REGEXP_CODE_RESULT
+* $^R
+
+没有等价变量。
+
+* ${^RE_DEBUG_FLAGS}
+
+没有等价变量。
+
+* ${^RE_TRIE_MAXBUF}
+
+没有等价变量。
+
+=== 文件句柄相关
+
+* $ARGV
+
+当前行读取文件的名字现在可以通过`$*ARGFILES.filename`获取到。
+
+* @ARGV
+
+`@*ARGS`包含了当前的命令行参数。
+
+* ARGV
+
+已经被`$*ARGFILES`取代。
+
+* ARGVOUT
+
+因为`-i`命令行选项现在还没有实现，目前并没有与`ARGVOUT`等价的变量。
+
+* $OUTPUT_FILE_SEPARATOR
+* $OFS
+* $,
+
+目前没有明显的等价变量。
+
+* $INPUT_LINE_NUMBER
+* $NR
+* $.
+
+当前行数现在通过文件句柄的`.ins`方法返回，例如`$*IN.ins`。
+
+* $INPUT_RECORD_SEPARATOR
+* $RS
+* $/
+
+可以通过文件句柄的`.nl-in`方法获得，例如`$*IN.nl-in`。
+
+* $OUTPUT_RECORD_SEPARATOR
+* $ORS
+* $\
+
+可以通过文件句柄的`nl-out`方法获得，例如`$*OUT.nl-out`。
+
+* $OUTPUT_AUTOFLUSH
+* $|
+
+Perl 6目前没有实现自动刷新缓冲区（autoflush）。
+
+* ${^LAST_FH}
+
+在 Perl 6中没有实现。
+
+=== 格式相关
+
+Perl 6中并没有内建格式。
+
+=== 错误变量
+
+因为 Perl 6中错误变量发生了变化，我将不会单独的介绍变化的细节。
+
+引用 Perl 6的文档，"$!是错误变量"，就是这样。
+所有的错误变量看来都被`$!`取代，与 Perl 6的其它部分一样，它可能是一个对象，根据用法的不同返回不同的
+结果。
+遗憾的是，目前关于它的文档比较稀少，它可能会如你所想，但我不保证这一点，希望不久的将来会有更多
+的信息。
+
+=== 解释器相关
+
+* $COMPILING
+* $^C
+* $^D
+
+目前没有与这些变量等价的变量。
+
+* ${^ENCODING}
+
+尽管在 Perl 5中弃用了，不过可能会有某种等价版本`$?ENC`，但是目前不清楚。
+
+* ${^GLOBAL_PHASE}
+
+Perl 6中没有等价物。
+
+* $^H
+* %^H
+* ${^OPEN}
+
+Perl 6可能有也可能没有与它们等价的变量，但是它们是内部的，你不应该去弄乱它们 -
+自然不会如果你对Perl 6的理解需要你阅读此文档（certainly not if your understanding
+of Perl 6 requires you to read this document）。。。
+
+* $PERLDB
+* $^P
+
+Perl 6的调试器类似于 Perl 5的调试器机会是比较小的，基于这一点 Perl 6中并没有等价的变量。
+
+* ${^TAINT}
+
+S28表明这个变量被“挂起”了，目前不存在。
+
+* ${^UNICODE}
+* ${^UTF8CACHE}
+* ${^UTF8LOCAL}
+
+Unicode相关的变量在 Perl 6中似乎不存在，但是 - 可能 - 会有类似于`$?ENC`的东西。
+然而，这完全是未经证实的。
+
+=== 弃用的或者移除的
+
+它们应该不言而喻，因为这些已经从 Perl 5中删除的变量，没有必要告诉你在 Perl 6中如何使用它们。
