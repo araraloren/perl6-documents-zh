@@ -91,7 +91,7 @@ https://docs.perl6.org/language/control#given[given]
 
 === 循环控制
 
- `next` ， `last` 和 `redo` 相对 Perl 5没有改变。
+`next` ， `last` 和 `redo` 相对 Perl 5没有改变。
 
 然而， `continue` 在 Perl 6中不存在了，你可以在循环体内使用 `NEXT` 语句块。
 
@@ -146,12 +146,12 @@ given EXPR {
 
 === Goto
 
- `goto` 可能和 Perl 5中以类似的方式工作，然而，在书写本文档的过程中，它还并没有实现。
+`goto` 可能和 Perl 5中以类似的方式工作，然而，在书写本文档的过程中，它还并没有实现。
 查看 `goto` 的计划，请访问 https://design.perl6.org/S04.html#The_goto_statement[goto statement]。
 
 === 省略（ellipsis）语句
 
- `...` （和 `!!!` 以及 `???` 一起）被用于创建存根声明，这可能比 Perl 5中的用法复杂一点，你也许想查看一下
+`...` （和 `!!!` 以及 `???` 一起）被用于创建存根声明，这可能比 Perl 5中的用法复杂一点，你也许想查看一下
 https://design.perl6.org/S06.html#Stub_declarations[残酷的]细节。
 也就是说，尽管它的功能在 Perl 6中被扩展了，似乎没有明显的理由不让省略语句的行为和 Perl 5一致。
 
