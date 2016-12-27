@@ -15,25 +15,29 @@ Perl 5 to Perl 6 指南 - 特殊变量
 关于 Perl 6特殊变量的全部文档，请参考关于它们的 Perl 6文档。
 
 == 特殊变量
+:underline: _
 
 === 一般变量
 
 * $ARG
 * $_
 
-感谢，`++$_++`还是像 Perl 5中那样是一般默认变量，在 Perl 6中的主要不同就是你现在可以调用它的方法。
-例如， Perl 5中的`++say $_++`在 Perl 6中可以是`++$_.say++`。
+感谢，`${underline}`还是像 Perl 5中那样是一般默认变量，在 Perl 6中的主要不同就是你现在可以调用它的方法。
+例如， Perl 5中的`say ${underline}`
+在 Perl 6中可以是`${underline}.say`。
 而且，由于它是默认变量，你甚至不需要使用变量名字，前面的例子使用`.say`同样可以完成。
 
 * @ARG
 * @_
 
-因为 Perl 6现在有了函数签名（function signatures），你的参数都去了那里，而不需要依赖`@_`。
-实际上，如果你使用函数签名，对`++@_++`的使用将会告诉你无法覆盖已经存在的签名。
+因为 Perl 6现在有了函数签名（function signatures），你的参数都去了那里，而不需要依赖`@{underline}`。
+实际上，如果你使用函数签名，对`@{underline}`的使用将会告诉你无法覆盖已经存在的签名。
 
-然而，如果你没有使用函数签名，`++@_++`将会像 Perl 5那样包含你传递给函数的实参。
-再一次，对于`++$_++`，你可以在它上面调用方法。
-不像`++$_++`，你无法把`++@_++`视为默认变量并在它上面调用方法，也就是，`@_.shift`可以工作，
+然而，如果你没有使用函数签名，`@{underline}`将会像 Perl 5那样包含你传递给函数的实参。
+再一次，对于`${underline}`，你可以在它上面调用方法。
+不像`${underline}`，
+你无法把`@{underline}`
+视为默认变量并在它上面调用方法，也就是，`@{underline}.shift`可以工作，
 `.shift`不行。
 
 * $LIST_SEPARATOR
@@ -46,7 +50,8 @@ Perl 5 to Perl 6 指南 - 特殊变量
 * $PID
 * $$
 
-在 Perl 6中，`$$`被`$*PID`取代。
+在 Perl 6中，`$$`
+被`$*PID`取代。
 
 * $PROGRAM_NAME
 * $0
@@ -66,7 +71,7 @@ NOTE: `$0`在 Perl 6中包含了匹配结果的第一个捕获（即捕获变量
 * $EGID
 * $)
 
-目前，Perl 6似乎并不支持获取有效组编号（effective group id)。
+目前，Perl 6似乎并不支持获取有效组编号（effective group id）。
 
 * $REAL_USER_ID
 * $UID
@@ -79,13 +84,13 @@ NOTE: `$0`在 Perl 6中包含了匹配结果的第一个捕获（即捕获变量
 * $EUID
 * $>
 
-目前，Perl 6似乎并不支持获取有效用户编号（effective user id)。
+目前，Perl 6似乎并不支持获取有效用户编号（effective user id）。
 
 * $SUBSCRIPT_SEPARATOR
 * $SUBSP
 * $;
 
-Perl 6中没有下标分隔符变量（subscript separator variable)，如果你的 Perl 5代码正在使
+Perl 6中没有下标分隔符变量（subscript separator variable），如果你的 Perl 5代码正在使
 用它，那代码几乎肯定是非常老了。
 
 * $a
