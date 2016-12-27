@@ -1,7 +1,16 @@
 = 5to6-perlsyn
 :toc-title: 目录
-
-Perl 5 to Perl 6 指南  - 语法
+:description: Perl 5 to Perl 6 指南 - 语法
+:keywords: perl6, perl 6, perl 6 document
+:Email: blackcatoverwall@gmail.com
+:Revision: 1.0
+:icons: font
+:source-highlighter: pygments
+:source-language: perl6
+:pygments-linenums-mode: table
+:toc: left
+:doctype: book
+:lang: zh
 
 perlsyn - Perl syntax
 
@@ -20,15 +29,15 @@ perlsyn - Perl syntax
 
 Perl 6 在很大程度上依然形式自由。
 然而，也有一些空白或者无空白现在是有意义的情况。
-例如，在 Perl 5 中，你可以省略紧跟在关键字后的空格（比如`while($x < 5)`
-或者`my($x, $y)`）。
-在 Perl 6 中，空白是必须的，即`while ($x < 5)`或者`my ($x, $y)`。
-然而，在 Perl 6 中，你可以完全省略括号：`while $x < 5`。
-这同样适用于`if`，`for`等。
+例如，在 Perl 5 中，你可以省略紧跟在关键字后的空格（比如 `while($x < 5)`
+或者 `my($x, $y)` ）。
+在 Perl 6 中，空白是必须的，即 `while ($x < 5)` 或者 `my ($x, $y)` 。
+然而，在 Perl 6 中，你可以完全省略括号： `while $x < 5` 。
+这同样适用于 `if` ， `for` 等。
 
 奇妙的是，在 Perl 5 中，你可以在数组或者哈希与下标访问之间，以及后缀运算
 符之前保留空白。
-所以，`$seen {$\_} {plus}{plus}`是合法的，而现在不复存在，即现在必须是`%seen{$_}{plus}{plus}`。
+所以， `$seen {$\_} {plus}{plus}` 是合法的，而现在不复存在，即现在必须是 `%seen{$_}{plus}{plus}` 。
 
 如果它让你感觉更好，你可以使用反斜杠转义空白，这可以使空白出现在本来禁止的地方。
 
@@ -37,13 +46,13 @@ Perl 6 在很大程度上依然形式自由。
 === 声明
 
 就像 https://docs.perl6.org/language/5to6-perlfunc[5to6-perlfunc]提到的那样，Perl 6
-中没有`undef`。
+中没有 `undef` 。
 一个已经声明的，但是未初始化的标量变量将计算其类型。
-换句话说，`my $x; say $x;`将会输出“(Any)”，`my Int $y; say $y;`将会输出“(Int)”。
+换句话说， `my $x; say $x;` 将会输出“(Any)”， `my Int $y; say $y;` 将会输出“(Int)”。
 
 === 注释
 
-就像 Perl 5那样，`#`开始一段注释并且直到行尾。
+就像 Perl 5那样， `#` 开始一段注释并且直到行尾。
 
 内嵌式注释起始于一个井号和一个重音符（译：即反引号）（#`），紧跟着是一个开括号字符，然后直到
 匹配的闭括号字符。就像这样：
@@ -55,36 +64,36 @@ if #`( why would I ever write an inline comment here? ) True {
 }
 -------------------------
 
-和 Perl 5中一样，你可以使用 pod 直接创建多行注释，`=begin comment`用于注释之前，`=end comment`
+和 Perl 5中一样，你可以使用 pod 直接创建多行注释， `=begin comment` 用于注释之前， `=end comment`
 跟着注释之后。
 
 === Truth 和 Faslehood
 
-Perl 5 truth 和 Perl 6 truth 之间的一个不同在于，不像 Perl 6，Perl 6 认为字符串`"0"`为真。
-数值`0`依然为假，并且你可以使用前缀运算符`+`强制字符串`"0"`作为数值让变成假。
-此外，Perl 6 中加入了真正的布尔（Boolean）类型，所以，在多数情况下，`True`和`False`都是
+Perl 5 truth 和 Perl 6 truth 之间的一个不同在于，不像 Perl 6，Perl 6 认为字符串 `"0"` 为真。
+数值 `0` 依然为假，并且你可以使用前缀运算符 `+` 强制字符串 `"0"` 作为数值让变成假。
+此外，Perl 6 中加入了真正的布尔（Boolean）类型，所以，在多数情况下， `True` 和 `False` 都是
 可能可用的，不需要担心数值是真或者假。
 
 === 语句修饰符
 
 除了一些例外，主要的语句修饰符依然可用。
 
-首先，`for`循环是唯一像 Perl 5 `foreach`那样的循环，并且`for`不再用于C风格的循环。
-要得到相同的效果，请使用`loop`，`loop`不再用做语句修饰符。
+首先， `for` 循环是唯一像 Perl 5  `foreach` 那样的循环，并且 `for` 不再用于C风格的循环。
+要得到相同的效果，请使用 `loop` ， `loop` 不再用做语句修饰符。
 
-在 Perl 6中，你不能再使用`do {...} while $x`格式，你可以替换为`do`和`repeat`的结合。
-类似于`do {...} until $x`。
+在 Perl 6中，你不能再使用 `do {...} while $x` 格式，你可以替换为 `do` 和 `repeat` 的结合。
+类似于 `do {...} until $x` 。
 
 === 复合语句
 
-相对于 Perl 5，最大的改变就是`given`不再是试验性的并且默认禁用，`given`的详细信息请参考
+相对于 Perl 5，最大的改变就是 `given` 不再是试验性的并且默认禁用， `given` 的详细信息请参考
 https://docs.perl6.org/language/control#given[given]
 
 === 循环控制
 
-`next`，`last`和`redo`相对 Perl 5没有改变。
+ `next` ， `last` 和 `redo` 相对 Perl 5没有改变。
 
-然而，`continue`在 Perl 6中不存在了，你可以在循环体内使用`NEXT`语句块。
+然而， `continue` 在 Perl 6中不存在了，你可以在循环体内使用 `NEXT` 语句块。
 
 [source, perl6]
 -------------------------
@@ -111,17 +120,17 @@ for 1..5 {
 
 === For循环
 
-就像上面提到的，C 风格的`for`循环在 Perl 6中不再叫做`for`了，它被叫做`loop`循环。
-要写一个无限循环，你不需要再使用 `loop (;;) {...}`样式的C 语法，而是直接省略表达式就可以：`loop {...}`。
+就像上面提到的，C 风格的 `for` 循环在 Perl 6中不再叫做 `for` 了，它被叫做 `loop` 循环。
+要写一个无限循环，你不需要再使用  `loop (;;) {...}` 样式的C 语法，而是直接省略表达式就可以： `loop {...}` 。
 
 === Foreach循环
 
-在 Perl 5中，`for`额外的被用于 C 风格的`for`循环，是`foreach`的同义词。
-在 Perl 6中，`for`只用于`foreach`风格循环。
+在 Perl 5中， `for` 额外的被用于 C 风格的 `for` 循环，是 `foreach` 的同义词。
+在 Perl 6中， `for` 只用于 `foreach` 风格循环。
 
 === Switch语句
 
-Perl 6有真正的 switch 语句，由`given`支持，并使用`when`和`default`处理不同的情况。
+Perl 6有真正的 switch 语句，由 `given` 支持，并使用 `when` 和 `default` 处理不同的情况。
 基本语法是：
 
 [source, perl6]
@@ -137,20 +146,20 @@ given EXPR {
 
 === Goto
 
-`goto`可能和 Perl 5中以类似的方式工作，然而，在书写本文档的过程中，它还并没有实现。
-查看`goto`的计划，请访问 https://design.perl6.org/S04.html#The_goto_statement[goto statement]。
+ `goto` 可能和 Perl 5中以类似的方式工作，然而，在书写本文档的过程中，它还并没有实现。
+查看 `goto` 的计划，请访问 https://design.perl6.org/S04.html#The_goto_statement[goto statement]。
 
 === 省略（ellipsis）语句
 
-`...`（和`!!!`以及`???`一起）被用于创建存根声明，这可能比 Perl 5中的用法复杂一点，你也许想查看一下
+ `...` （和 `!!!` 以及 `???` 一起）被用于创建存根声明，这可能比 Perl 5中的用法复杂一点，你也许想查看一下
 https://design.perl6.org/S06.html#Stub_declarations[残酷的]细节。
 也就是说，尽管它的功能在 Perl 6中被扩展了，似乎没有明显的理由不让省略语句的行为和 Perl 5一致。
 
 === PODs：内嵌式文档
 
-Perl 6的 POD 相对 Perl 5有了改变，可能最大的不同就是你需要在`=begin pod`和`=end pod`之间的封装你的 pod。
-微小的变动到处存在，比如说，我在写本文档时发现，`"|"`在`X<>`代码中有特殊的含义，并且插入一个字面量的
-`"|"`方法并不明确。
-你最好使用 Perl 6解释器检查你的 pod，你可以使用`--doc`开关来完成这项工作，比如`perl6 --doc Whatever.pod`，
-这会把所有的问题输出到标准错误输出（取决于你如何或者在哪里安装的 perl6，你可能需要指定`Pod::To::Text`的位置）。
+Perl 6的 POD 相对 Perl 5有了改变，可能最大的不同就是你需要在 `=begin pod` 和 `=end pod` 之间的封装你的 pod。
+微小的变动到处存在，比如说，我在写本文档时发现， `"|"` 在 `X<>` 代码中有特殊的含义，并且插入一个字面量的
+ `"|"` 方法并不明确。
+你最好使用 Perl 6解释器检查你的 pod，你可以使用 `--doc` 开关来完成这项工作，比如 `perl6 --doc Whatever.pod` ，
+这会把所有的问题输出到标准错误输出（取决于你如何或者在哪里安装的 perl6，你可能需要指定 `Pod::To::Text` 的位置）。
 关于 Perl 6 pod 的详细信息请查看 https://design.perl6.org/S26.html[S26]。

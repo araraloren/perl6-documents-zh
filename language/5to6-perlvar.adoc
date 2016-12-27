@@ -241,7 +241,7 @@ S28还列出了 `$*VM`（我的rakudo star目前给出的是“moar (2015.5.63.g
 * $PERMATCH
 * $`
 
-被`$/.prematch`取代。
+被 `$/.prematch` 取代。
 
 * ${^PREMATCH}
 
@@ -323,11 +323,11 @@ S28建议使用 `$*MOST_RECENT_CAPTURED_MATCH`，但是现在并没有任何实�
 
 * @ARGV
 
-`@*ARGS`包含了当前的命令行参数。
+`@*ARGS` 包含了当前的命令行参数。
 
 * ARGV
 
-已经被`$*ARGFILES`取代。
+已经被 `$*ARGFILES` 取代。
 
 * ARGVOUT
 
