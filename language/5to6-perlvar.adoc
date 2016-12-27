@@ -10,6 +10,7 @@
 :pygments-linenums-mode: table
 :toc: left
 :doctype: book
+:lang: zh
 
 == 描述
 
