@@ -1,7 +1,15 @@
 = 5to6-perlvar
 :toc-title: 目录
-
-Perl 5 to Perl 6 指南 - 特殊变量
+:description: Perl 5 to Perl 6 指南 - 特殊变量
+:keywords: perl6, perl 6, perl 6 document
+:Email: blackcatoverwall@gmail.com
+:Revision: 1.0
+:icons: font
+:source-highlighter: pygments
+:source-language: perl6
+:pygments-linenums-mode: table
+:toc: left
+:doctype: book
 
 == 描述
 
