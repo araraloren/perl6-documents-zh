@@ -1,0 +1,1712 @@
+= Perl 5 到 Perl 6 指南 - 函数
+:toc-title: 目录
+:description: Perl 5 到 Perl 6 指南：函数
+:keywords: perl6, perl 6, perl 6 document
+:Email: blackcatoverwall@gmail.com
+:Revision: 1.0
+:icons: font
+:source-highlighter: pygments
+:source-language: perl6
+:pygments-linenums-mode: table
+:toc: left
+:doctype: book
+:lang: zh
+
+
+== 描述
+
+一个全面的（希望如此）Perl 5内建函数在 Perl 6中的等价物列表，并在必要时记录他们的差异。
+
+== 注意
+
+我将不会详细的解释函数，本文档只是尝试引导你从 Perl 5 的 perlfunc 文档过渡到他们在 Perl 6的等价物，
+如果想了解 Perl 6函数的完整文档，请参阅 Perl 6文档。
+
+一个一般意见是：Perl 6比 Perl 5 更加面向对象，在 Perl 6中，所有东西都是对象，然而如果你不想这
+么做的话，语言足够灵活到不强制你工作在面向对象风格。
+意思就是，不管怎样，有很多函数调用由 `function(@args)` 风格变为了现在的 `@args.function`
+风格（罕见情况下，仅有方法调用），这在下面的正文中会很显然，不过这可以让更快的进入意境。
+
+还有，除非另有说明，“function”一词意思就是一个 `func(@args)` 风格的函数，同时“method”一词
+代表一个 `@args.func` 风格的函数。
+
+== 源码
+
+我的信息来自 https://doc.perl6.org/[https://doc.perl6.org/]，https://design.perl6.org/[设计文档]
+用做补充，并由 irc.freenode.org[irc.freenode.org] #perl6 频道中的成员负责输入（？？）。
+
+== 字母顺序的 Perl 函数
+:underline: _
+
+=== 文件测试
+
+* -X FILEHANDLE（文件句柄）
+
+* -X EXPR（表达式）
+
+* -X DIRHANDLE（目录句柄）
+
+* -X
+
+对于文件测试 Perl 6给了你两种选择，你可以使用智能匹配（`~~`）或者调用对应的方法。
+
+在 Perl 6中进行文件测试，你不必像传统方式一样需要打开一个文件句柄（当然你仍然可以使用文件句柄），
+简单的向文件名字后面追加 `.IO` 即可。
+下面是使用智能匹配检测一个文件是否可读的示例：
+
+[source, perl6]
+--------------------------
+'/path/to/file'.IO ~~ :r
+--------------------------
+
+你仍然可以利用一个已经打开的文件句柄完成测试，现在我们有一个文件句柄 `$fh`，使用方法调用语法完
+成可读性文件测试如下：
+
+[source, perl6]
+--------------------------
+$fh.r
+--------------------------
+
+大多数之前的文件测试都有和智能匹配一起使用的带冒号的版本：
+
+    :e Exists
+    :d Directory
+    :f File
+    :l Symbolic link
+    :r Readable
+    :w Writeable
+    :x Executable
+    :s Size
+    :z Zero size
+
+所有这些测试也都可以作为方法使用（不加冒号）。
+
+下面的三种测试只有方法调用版本：
+
+[source, perl6]
+--------------------------
+$fh.modified;	# -M $fh
+$fh.accessed;	# -A $fh
+$fh.changed;	# -C $fh
+--------------------------
+
+Perl 5中其它的文件测试操作在还未在 Perl 6中实现。
+
+关于文件测试的文档可以在 https://doc.perl6.org/type/IO::FileTestable#File_Test_operators[文件测试操作符]
+找到。
+
+https://doc.perl6.org/language/io[io]有更多的关于读写文件的信息，还有下面的 `open()` 小节
+对你也会有帮助。
+
+=== abs
+
+* abs VALUE（值）
+
+可以是一个函数（`abs(x)`），也可以是一个方法。
+然而有一个问题，方法绑定的优先级大于 `-`（负号），所以，`-15.abs` 将作为 `-(15.abs)` 求值，
+结果是 `-15`，在这种情况下，你可能需要做类似与 `(-15).abs` 的处理。
+
+在缺少一个值的时候，`abs` 可以工作在 `$_` 上面，但是不是一个函数，而是一个方法，你需要用 `.abs`
+替换比较简单的 `abs` 来调用它。
+
+=== accept
+
+* accept NEWSOCKET, GENERICSOCKET
+
+`accept` 是一个你可以在服务器端使用的方法，例如 `$server.accept()`，作为原来封装的地址返回值替代，
+它返回一个 `socket`，最有可能是一个 `IO::Socket` 对象。
+
+=== alarm
+
+* alarm SECONDS
+
+[需要进一步研究]已经没有 `alarm()` 了，有人建议用新的并发功能取代它，比如 `Promise.in`，但是
+为了真正模拟它可能需要一些“挖掘”。
+
+=== atan2
+
+* atan2 Y, X
+
+即可以作为函数又可以作为方法使用，下面的两种方式是等价的：
+
+[source, perl6]
+--------------------------
+atan2(100);
+100.atan2;
+--------------------------
+
+
+=== bind
+
+* bind SOCKET, NAME
+
+[需要进一步研究]在 Perl 6没有和 socket 相关函数 `bind()` 签名一致的函数，作为一个猜想，socket
+绑定在创建一个新的 socket 对象的时候完成。
+
+=== binmode
+
+* binmode	FILEHANDLE
+
+作为替代手段，你可以在打开文件的时候使用 `:bin` 文件模式，比如 `my $fh = open('/path/to/file', :bin);`。
+
+=== bless
+
+* bless REF, CLASSNAME
+
+因为 Perl 6中类的创建发生了改变，可能会比 Perl 5中更少被用到，现在它是一个方法也是一个函数。
+Perl 6文档中说，它可以创建一个和 invocant 类型一样的新的对象，使用命名参数初始化属性，然后返回
+创建的对象。如果你正在移植一个 Perl 5的模块到 Perl 6，很有可能你想使用 `new` 来创建对象，而
+不是 `bless` ，虽然有些情况下，后者也会有用。
+
+=== break
+
+* break
+
+在 Perl 6中被移除，如果你想跳出 `given` 块结构，你可能需要看一下 `proceed` 和 `succeed` ，
+地址是 https://doc.perl6.org/language/control#proceed_and_succeed[这里]。
+
+=== caller
+
+* caller EXPR
+
+在 Perl 6中有两种不同的方式获取调用者的信息，基础功能现在通过 https://docs.perl6.org/routine/callframe[callframe]
+提供。
+然而，Perl 6不仅为子例程，而且为一般的 Block 构造调用帧，所以可能存在多个帧可供查看。
+下面的代码将取得 `caller` 可以返回的基本信息：
+
+[source, perl6]
+--------------------------
+my $frame   = callframe(0); # 或者直接用 callframe()
+my ($subroutine, $package);
+if $frame.code ~~ Routine {
+    $subroutine = $frame.code.name;
+    $package    = $frame.code.package;
+}
+my $file    = $frame.file;
+my $line    = $frame.line;
+--------------------------
+Perl 5中的 `caller` 返回的其它更多的细节在 Perl 6中都没有意义。
+
+你还可以通过使用动态变量
+https://docs.perl6.org/language/$AMPERSAND$QUESTION_MARKROUTINE[&?ROUTINE]
+https://docs.perl6.org/language/$AMPERSAND$QUESTION_MARKBLOCK[&?BLOCK]
+https://docs.perl6.org/language/$DOLLAR_SIGN$QUESTION_MARKPACKAGE[&?PACKAGE]
+https://docs.perl6.org/language/$DOLLAR_SIGN$QUESTION_MARKFILE[&?FILE]
+以及
+https://docs.perl6.org/language/$DOLLAR_SIGN$QUESTION_MARKLINE[&?LINE]
+获取当前的帧或者例程帧的一些信息。
+在许多情况下，https://docs.perl6.org/type/Backtrace[Backtrace]可能是浏览调用栈的一个更简单的方式。
+
+=== chdir
+
+* chdir EXPR
+
+似乎和 Perl 5中一样。
+
+
+=== chmod
+
+* chmod LIST
+
+和 Perl 5中一样是函数，只是8进制数的表示有些不大一样（是 `0o755` 而不是 `0755` ），你也可以把它作为方法使用，比如 `$fh.chmod(0o755)` 。
+
+=== chomp
+
+* chomp VARIABLE
+
+`chomp` 的行为和 Perl 5中有些不同，它对目标不产生影响，而是返回一个去除逻辑换行符的新的目标，
+也就是 `$x = "howdy\n"; $y = chomp($x);` ，结果是 `$x` 包含“howdy\n”以及 `$y` 包含“howdy”。
+同样可以作为方法使用，也就是 `$y = $x.chomp` 。
+
+=== chop
+
+* chop VARIABLE
+
+和 `chomp` 一样，在 Perl 6中，它返回被短切以后的字符串，而不是直接短切替换，也就是 `$x = "howdy"; $y = chop($x);` ，
+结果是 `$x` 包含“howdy”以及 `$y` 包含“howd”。
+同样可以作为方法使用： `$y = $x.chop` 。
+
+=== chown
+
+* chown LIST
+
+Perl 6中没有 `chown` 。
+
+=== chr
+
+* chr NUMBER
+
+和 Perl 5的版本相似，把目标强制转换成整数，然后作为一个 Unicode code point 并返回相关的字符，
+可以作为函数或者方法使用：
+
+[source, perl6]
+--------------------------
+chr(65);	# 输出 A
+65.chr;		# 输出 A
+--------------------------
+
+=== chroot
+
+* chroot FILENAME
+
+似乎在 Perl 6中不存在。
+
+=== close
+
+* close FILEHANDLE
+
+像 Perl 5中那样，关闭一个文件句柄，返回一个逻辑值。 `close $fh` 或者 `$fh.close` 将会同时提供。
+
+=== closedir
+
+* closedir DIRHANDLE
+
+现在， Perl 6中并没有 `closedir` 函数，当它被实现的时候，它可能是IO::Dir的一个方法。
+
+=== connect
+
+* connect SOCKET, NAME
+
+文档中没有描述清楚，但是似乎 `connect` 将会是 IO::Socket 类的方法。
+
+=== continue
+
+* continue BLOCK
+
+* continue
+
+作为 `continue` 块使用方法的替代，你可以使用 `NEXT` 块，更接近 Perl 5中 `continue` 用法的是
+`proceed` / `succeed` 。
+
+=== cos
+
+* cos EXPR
+
+和 Perl 5中一样，但是还可以作为方法使用，也就是 `(1 / 60000).cos` 。
+
+=== crypt
+
+* crypt PLAINTEXT, SALT
+
+在 Perl 6中似乎没有实现。
+
+=== dbm function
+
+* dbmclose HASH
+
+* dbmopen HASH, DBNAME, MASK
+
+这些函数在 Perl 5中很大程度上被取代了，不太可能出现在 Perl 6中（尽管 Perl 6的数据库实现可能是不成熟的）。
+
+=== defined
+
+* defined EXPR
+
+它可能像你期望的那样工作，但是从技术上讲对于类型对象它返回 `False` ，其它情况返回 `True` 。
+它使得当你没有为一个东西赋值时 `$num.perl` 会返回 `Any` 或者当你赋值了返回当前值更有意义。
+当然，你也可以作为一个方法使用它： `$num.defined` 。
+
+=== delete
+
+* delete EXPR
+
+Perl 6使用新的通过指定 `:deleet` 副词的副词语法取代了它，比如
+`my $delete_value = %hash{$key}:delete;`
+和
+`my $delete_value = @array[$i]:delete;` 。
+
+=== die
+
+* die LIST
+
+和 Perl 5版本的功能相似，但是 Perl 6的异常机制比 Perl 5更强大，更灵活，参见 https://doc.perl6.org/language/exceptions[exceptions]。
+如果你想忽略堆栈踪迹和位置，就像 Perl 5中的 `die "...\n"` ，可以这样：
+
+[source, perl6]
+--------------------------
+note "...\n";
+exit 1;
+--------------------------
+
+=== do
+
+* do BLOCK
+
+和 Perl 5版本的功能相似，不过注意 `do` 和 `BLOCK` 之间必须有一个空白。
+
+* do EXPR
+
+被 Perl 6中的 `EVALFILE` 取代。
+
+
+=== dump
+
+* dump LABEL
+
+根据S29描述， `dump` 已经被废弃了。
+
+=== each
+
+* each HASH
+
+没有完全等效的函数，不过你可以使用 `%hash.kv` ，它会返回一个键值列表，比如： `for %hash.kv -> $k, $v { say "$k:$v" }` 。
+顺便，我们这里提到的 `->` 被叫做箭头语句块，虽然文档中有很多这种例子，但是并没有一个关于它是如何运作的清晰的解释。
+https://design.perl6.org/S04.html#The_for_statement[s04#The_for_statement]对你可能有些帮助，
+还有设计文档的 https://design.perl6.org/S06.html#%22Pointy_blocks%22[S06#Pointy_blocks]，
+另外 https://en.wikibooks.org/wiki/Perl_6_Programming/-%20Blocks_and_Closures#Pointy_Blocks 也有一些信息。
+
+=== eof
+
+* eof FILEHANDLE
+
+在 Perl 6，可能没有这样的一个函数了，而是作为一个方法，也就是 `$filehandle.eof` ，如果文件
+已经到达末尾它会返回 `True` 。
+
+=== eval
+
+* eval EXPR
+
+被 `EVAL` 替代，注意的是 `EVAL` 不进行任何异常处理。
+
+=== evalbytes
+
+* evalbytes EXPR
+
+在 Perl 6中似乎不存在。
+
+=== exec
+
+* exec LIST
+
+Perl 6中没有函数跟 Perl 5中的 `exec` 相同， `shell` 和 `run` 类似于 Perl 5中的 `system` ，但是
+`exec` 在执行了系统命令之后不再返回的特性需要用类似 `shell($command);exit();` 或者 `exit shell($command)` 的
+东西来模拟。
+
+=== exists
+
+* exists EXPR
+
+在 Perl 6中不是一个函数，而是一个副词：
+
+[source, perl6]
+--------------------------
+%hash{$key}:exists;
+@array[$i]:exists;
+--------------------------
+
+=== exit
+
+* exit EXPR
+
+看起来和 Perl 5中一样。
+
+=== exp
+
+* exp EXPR
+
+和 Perl 5中一样，但是也可以作为方法使用： `5.exp`。
+
+=== fc
+
+* fc EXPR
+
+看起来和 Perl 5中一样。
+
+=== fcntl
+
+* fcntl   FILEHANDLE, FUNCTION, SCALAR
+
+似乎在 Perl 6中不存在。
+
+=== {underline}{underline}FILE{underline}{underline}
+
+* {underline}{underline}FILE{underline}{underline}
+
+被 `$?FILE` 取代。
+
+=== fileno
+
+* fileno FILEHANDLE
+
+S32 表明会作为方法提供，但是似乎现在并未实现。
+
+=== flock
+
+* flock FILEHANDLE, OPERATION
+
+目前并未实现。
+
+=== fork
+
+* fork
+
+并未作为内建函数实现，但是可以通过 `Native Call` 接口使用，例如： `use NativeCall; sub fork returns win32 is native { * }; say fork;` 。
+
+=== formats###
+
+* format
+
+* fromline PICTURE, LIST
+
+Perl 6没有内建的formats。
+
+=== getc
+
+* getc FILEHANDLE
+
+和 Perl 5一样从输入流中读取一个字符，现在也可以作为一个方法使用： `$filehandle.getc` 。
+
+=== getlogin
+
+* getlogin
+
+S29列出了它，但是好像还没有实现。
+
+=== getpeername
+
+* getpeername SOCKET
+
+S29列出了它，但是实现似乎并不清楚，或者就此而言，（并未？）实现（？原文意思看不懂，for that matter, implemented.）。
+
+=== getpgrp
+
+* getpgrp PID
+
+看起来没有实现。
+
+=== getpriority
+
+* getpriority WHICH, WHO
+
+看起来没有实现。
+
+=== get and set function
+
+* getpwnam NAME
+
+* getgrnam NAME
+
+* gethosybyname NAME
+
+* getnetbyname NAME
+
+* getprotobyname NAME
+
+* getpwuid UID
+
+* getgrgid GID
+
+* getservbyname NAME, PROTO
+
+* gethostbyaddr ADDR, ADDRTYPE
+
+* getnetbyaddr ADDR, ADDRTYPE
+
+* getprotobynumber NUMBER
+
+* getservbyport PORT, PROTO
+
+* getpwent
+
+* getgrent
+
+* gethostent
+
+* getnetent
+
+* getprotoent
+
+* getservent
+
+* setpwent
+
+* setgrent
+
+* sethostent STAYOPEN
+
+* setnetent STAYOPEN
+
+* setprotoent STAYOPEN
+
+* setservent STAYOPEN
+
+* endpwent
+
+* endgrent
+
+* endhostent
+
+* endnetent
+
+* endprotoent
+
+* endservent
+
+[需要进一步研究]似乎这个列表中的函数可以被一些 Roles 比如 User, Group 等处理。
+
+=== getsock*
+
+* getsockname SOCKET
+
+* getsocketopt SOCKET, LEVEL, OPTNAME
+
+[需要进一步研究]现在看起来可能被实现成某种 IO::Socket 对象，但是具体细节不详。
+
+=== glob
+
+* glob EXPR
+
+在S32中一个例子使用过，但是似乎没有实现。
+
+=== gmtime
+
+* gmtime EXPR
+
+`localtime` 、 `gmtime` 的各种功能似乎在 `DateTime` 对象里，比如获取一个 UTC 格式的当前时间的 `DateTime` 对象，
+可以这么用： `my $gmtime = DateTime.now.utc` 。
+
+=== goto
+
+* goto LABEL
+
+* goto EXPR
+
+* goto &NAME
+
+[需要进一步研究]在 S04中有所描述，但是并不完善。
+
+=== grep
+
+* grep BLOCK LIST
+
+* grep EXPR, LIST
+
+在 Perl 6依然存在，不过需要注意的是代码块之后需要一个逗号，即 `@foo = grep {$_ == "bars"}, @baz` ，
+也可以作为一个方法使用： `@foo = @bar.grep(/^f/)` 。
+
+=== hex
+
+* hex EXPR
+
+被副词形式 `:16` 取代，例如 `:16("aF")` 返回 175。
+
+另外，可以使用 `.base` 方法得到同样的结果： `0xaF.base(10)` 。
+
+碰巧 `.Str` 默认显示的是 10 进制，所以如果你只是 `say 0xaF` ，它依然会打印 175，但这样不是很直观，
+所以可能不是最好的方式。
+
+=== import
+
+* import LIST
+
+首先在 Perl 5 中它从来不是一个函数，在 Perl 6中，通常，函数可以声明为导出或者不导出，所有可导出
+的函数一起导出，然而，可选择的导出也是可能的，但是这超出了本文档的范围，详见 https://doc.perl6.org/language/-%20https://doc.perl6.org/language/5to6#Importing_specific_functions_from-%20_a_module[这里]。
+
+=== index
+
+* index STR, SUBSTR, POSITION
+
+和 Perl 5中一样，也可以作为一个方法使用：`"howdy!".index("how"); # 返回值 0`。
+
+=== int
+
+* int EXPR
+
+在 Perl 6里面它是和 Perl 5中一样 的 `truncate` （截断）函数（也作为方法提供），你可能直接使用
+它作为 Perl 5代码的移植版本，但是在 Perl 6中，你可以对一个数字方便的直接调用   `.Int` 方法。
+`3.9.Int; # 返回值 3` 以及 `3.9.truncate` 是一样的。
+
+=== ioctl
+
+* ioctl FILEHANDLE, FUNCTION, SCALAR
+
+目前在 Perl 6中并未实现。
+
+=== join
+
+* join EXPR, LIST
+
+和 Perl 5中一样，亦可以作为方法使用： `@x.join(',')` 。
+
+=== keys
+
+* keys HASH
+
+和 Perl 5中一样，也可以作为方法使用： `%hash.keys` 。
+
+=== kill
+
+* kill SIGNAL, LIST
+
+* kill SIGNAL
+
+现在是 `Proc::ASync` 类的一部分，但是看起来和 Perl 5中一样工作。
+
+=== last
+
+* last LABEL
+
+* last EXPR
+
+* last
+
+和 Perl 5中一样。
+
+=== lc
+
+* lc EXPR
+
+和 Perl 5中一样，还可以作为方法使用： `"UGH".lc` 。
+
+=== lcfirst
+
+* lcfirst EXPR
+
+在 Perl 6中不存在。
+
+=== length
+
+* length EXPR
+
+被 `chars` 取代，通常作为一个方法使用（ `$string.chars` ），但是也可以作为函数使用。
+
+=== {underline}{underline}LINE{underline}{underline}
+
+* {underline}{underline}LINE{underline}{underline}
+
+被 `$?LINE` 取代。
+
+=== link
+
+* link OLDFILE, NEWFILE
+
+在 Perl 6里面属于 `IO::Path` 类的一部分，和 Perl 5中唯一的区别就是参数的顺序变了，现在是 `link($original, $linked_file)` 。
+
+=== listen
+
+* listen SOCKET, QUEUESIZE
+
+文档中没有明确的描述，但是看起来 `listen` 会作为 `IO::Socket` 的一个方法。
+
+=== local
+
+* local EXPR
+
+Perl 6中对等的是 `temp` 。
+
+=== localtime
+
+* localtime EXPR
+
+`localtime` 的大部分的功能都可以在 `DateTime` 中找到， `localtime` 特定的部分如下：
+
+[source, perl6]
+--------------------------
+my $d = DateTime.now;
+
+$sec    = $d.second;        # 可能是分钟秒
+$min    = $d.minute;        #
+$hour   = $d.hour;          #
+$mday   = $d.day-of-month;  # 或者 $d.day; 1 .. 31
+$mon    = $d.month;         # 1 .. 12
+$year   = $d.year;          #
+$wday   = $d.day-of-week;   # 1 => Monday, 2 => Tuesday, ect.
+$yday   = $d.day-of-year;   # 1 .. 366
+--------------------------
+
+注意在 Perl 6中的范围并不是基于0的，就像上面的例子那样。
+
+好像没有一种明确的方式可以得到 Perl 5中的 `$isdst` 对应的值， Perl 5中提供的 `scalar(localtime)`
+已经不可用了， `$d.Str` 会返回类似“2015-06-29T12:49:31-04:00”的东西。
+
+=== lock
+
+* lock THING
+
+在 Perl 6里面，是 `Lock` 类的一个方法。
+
+=== log
+
+* log EXPR
+
+在 Perl 6中可用，亦可以作为方法使用，也就是 `log(2)` 和 `2.log` 效果一样。
+
+=== lstat
+
+* lstat FILEHANDLE
+
+* lstat EXPR
+
+* lstat DIRHANDLE
+
+* lstat
+
+可能在 Perl 6中的 `IO` 类的某处实现了，现在并不是很清楚在哪里。
+
+=== m//
+
+* m//
+
+正则表达式在 Perl 6中有点不一样，但是匹配操作依然存在，如果你想重写 Perl 5的代码，最重要的区别就是
+`=~` 被智能匹配运算符 `~~` 取代，同样， `!~` 被 `!~~` 取代，正则操作的设置都是副词并且复杂，如想了解细节，
+参见 https://doc.perl6.org/language/regexes#Adverbs[Adverbs]。
+
+=== map
+
+* map BLOCK LIST
+
+* map EXPR, LIST
+
+作为一个函数，和 Perl 5中不同的地方是如果你需要一个代码块，代码块后面必须跟着一个逗号，也可以作
+为一个方法使用： `@new = @old.map: { $_ * 2 }` 。
+
+=== mkdir
+
+* mkdir FILENAME, MASK
+
+* mkdir FILENAME
+
+
+和 Perl 5中一样。
+
+* mkdir
+
+无参数的版本（隐式变量 `$_` ）在 Perl 6中没有实现。
+
+=== msg*
+
+* msgctl ID, CMD, ARG
+
+* msgget KEY, FLAGS
+
+* msgrcv ID, VAR, SIZE, TYPE, FLAGS
+
+* msgsnd ID, MSG, FLAGS
+
+在 Perl 6不在内建支持，可能会出现在某些扩展模块中。
+
+=== my
+
+* my VARLIST
+
+* my TYPE VARLIST
+
+* my VARLIST: ATTRS
+
+* my TYPE VARLIST: ATTRS
+
+和 Perl 5中一样。
+
+=== next
+
+* next LABEL
+
+* next EXPR
+
+* next
+
+Perl 6中也是一样。
+
+=== no
+
+* no MODULE VERSION
+
+* no MODULE LIST
+
+* no MODULE
+
+* no VERSION
+
+在 Perl 6中，它是类似于 `strict` 一样的编译指示，但是作用对象不是模块，并不清楚它是否有版本功能，
+因为目前有些东西有争议，我觉得没有。
+
+=== oct
+
+* oct
+
+被副词格式 `:8` 取代，比如：`:8("100")` 返回 64。
+
+=== open
+
+* open FILEHANDLE, EXPR
+
+* open FILEHANDLE, MODE, EXPR
+
+* open FILEHANDLE, MODE, EXPR, LIST
+
+* open FILEHANDLE, MODE, REFERENCE
+
+* open FILEHANDLE
+
+相对于 Perl 5最明显的改变就是文件模式的语法，以只读方式打开一个文件， 你需要使用 `open("file", :r);` ，
+以只写、读写以及追加的方式打开需要分别使用 `:w` ， `:rw` 以及 `:a` ，另外还有一些关于编码以及如何处理换行的选项，
+具体参见 https://doc.perl6.org/routine/open[open]。
+
+=== opendir
+
+* opendir DIRHANDLE, EXPR
+
+在 Perl 6里面不是一个内建的函数，你需要使用 `IO::Path` 类：
+
+[source, perl6]
+--------------------------
+my $dir = IO::Path.new("directory");
+
+my $dir = "directory".IO; # 跟上面的效果一样，更直接
+--------------------------
+
+=== ord
+
+* ord EXPR
+
+和 Perl 5中一样，也可以作为方法使用： `"howdy!".ord;`  # 输出 104
+
+=== our
+
+* our VARLIST
+
+* our TYPE VARLIST
+
+* our VARLIST : ATTRS
+
+* our TYPE VARLIST : ATTRS
+
+
+在 Perl 6中同样可以使用。
+
+=== pack
+
+* pack TEMPLATE, LIST
+
+
+在 Perl 6中依然可用，模板的选项相对 Perl 5现在更加的严格，当前的文档可以参见[unpack](https://doc.perl6.org/routine/unpack)。
+
+=== package
+
+* package NAMESPACE
+
+* package NAMESPACE VERSION
+
+* package NAMESPACE BLOCK
+
+* package NAMESPACE VERSION BLOCK
+
+S10 表明 `package` 在 Perl 6中是可用的，但是只适用于代码块，也就是： `package Foo { ... }` 表示
+后面的代码块是属于 package Foo 的，当使用 `package Foo;` 声明格式时有一种特殊情况，当它作为文件的
+第一条语句时表明文件中剩余的代码都是  Perl 5的代码，但是它的有效性目前尚不清楚。
+实际上，因为模块和类的声明需要不同的关键字（比如 `class` ），你不大可能会在 Perl 6中直接使用 `package` 。
+
+=== {underline}{underline}PACKAGE{underline}{underline}
+
+* {underline}{underline}PACKAGE{underline}{underline}
+
+被 `$?PACKAGE` 取代。
+
+=== pipe
+
+* pipe READHANDLE, WRITEHANDLE
+
+可能会被 `IO::Pipe` 类中的某些东西取代，但是现在并没有明确的文档说明。
+
+=== pop
+
+* pop ARRAY
+
+在 Perl 6中同样工作，也可以作为方法使用，即： `my $x = pop @a;`  和  `my $x = @a.pop;`  是等价的。
+
+=== pos
+
+* pos SCALAR
+
+在 Perl 6中不可用，和它最具等价功能的是 `:c` 副词，如果 `$/` 为真，它默认的值是 `$/.to` ，否则是 `0` 。
+更多的信息在 https://doc.perl6.org/language/regexes#Continue[Continue]可以找到。
+
+=== print
+
+* print FILEHANDLE LIST
+
+* print FILEHANDLE
+
+* print LIST
+
+* print
+
+`print` 在 Perl 6中可以作为一个函数使用，默认输出到标准输出。作为函数使用 `print` 并且使用文件句柄
+替代标准输出，你需要在文件句柄后加一个*冒号*，即： `print $fh:"Howdy!"` ，使用冒号作为“调用者标记”的
+用法讨论在 https://design.perl6.org/S03.html#line_4019[这里]可以找到，另外你也可以使用
+方法调用： `$fh.print("Howdy!")` 。
+
+=== printf
+
+* printf FILEHANDLE
+
+* print FORMAT, LIST
+
+* printf
+
+在 Perl 6中依然工作，对于格式，参见 `sprintf` 的文档。
+
+=== prototype
+
+* prototype FUNCTION
+
+在 Perl 6中不可用，功能最接近的是 `.signature` ，例如： `say &sprintf.signature` ，结果是 `(Cool $format, *@args)` 。
+
+=== push
+
+* push ARRAY, LIST
+
+在 Perl 6 中依然可以使用，而且可以作为方法使用：`@a.push("foo")`，注意，flattening 的行为
+和 Perl 5中不同： `@b.push: @a` 将会把 `@a` 作为单个元素压入到 `@b` 中，你还可以参考 https://doc.perl6.org/type/Array#method_append [append method]。
+
+=== qutoing
+
+* q/STRING/
+
+* qq/STRING/
+
+* qw/STRING/
+
+* qx/STRING/
+
+这些用法过渡到 Perl 6 的一些建议：
+    q/.../  # 依然等价与使用单引号
+    qq/.../ # 依然等价与使用双引号
+    qw/.../ # 更多的类似与 Perl 6中的C<< <...> >>
+
+https://docs.perl6.org/language/quoting[qutoing] 介绍了一些新增加的引号构造和他们的等价用法。
+
+* qr/STRING/
+
+被 `rx/.../` 取代。
+
+* quotemate EXPR
+
+没有直接的等价用法，换句话说，没有直接返回字符串中所有ASCII非单词转义字符的操作。
+然而，在 regexes 中使用 `$foo` 会被视为字符串字面量，使用 `<$foo>` 会将 `$foo` 的内容作为正则代码
+直接内插到表达式中，注意尖括号和它在正则表达式外部的行为有点不同。
+要了解更多请参考 https://design.perl6.org/S05.html#Extensible_metasyntax_\(%3C...%3E\)。
+
+=== rand
+
+* rand EXPR
+
+`rand` 和 Perl 5中一样能工作，但是你可以不再给它提供参数了。把它作为一个方法使用就会是这样的效果，
+即 Perl 5中的 `rand(100)` 等价于 Perl 6中的 `100.rand` 。
+另外，你还可以通过 `(^100).pick` 获取一个随机的整数，想了解这么做的理由，可以参考
+https://docs.perl6.org/language/operators#prefix_%255E[\^操作符] 以及 https://docs.perl6.org/routine/pick[pick]。
+
+=== read
+
+* read FILEHANDLE, SCALAR, LENGTH, OFFSET
+
+`read` 函数现在在 Perl 6 中的 `IO::Handle` 以及 `IO::Socket` 中，它从关联的句柄或者套接字读取
+指定数量的字节（而不是字符），关于 Perl 5中的偏移目前的文档中还没说明。
+
+=== readdir
+
+* readdir DIRHANDLE
+
+不再是内建函数。遍历一个目录的内容，请参考 https://docs.perl6.org/type/IO$COLON$COLONPath#routine_dir[dir]。
+
+=== readline
+
+* readline
+
+在 Perl 6 中不再可用，某种程度上你最可能想使用 `.lines` 方法，想了解读取文件的更详细的信息，参阅 https://docs.perl6.org/language/io[io]。
+
+=== readlink
+
+* readlink EXPR
+
+看起来从 Perl 6 中移除了。
+
+=== readpipe
+
+* readpipe EXPR
+
+* readpipe
+
+看起来在 Perl 6 中并不可用，但是 `qx//` 的功能丰富，所以它可能在某些类中不明显的使用。
+
+=== recv
+
+* recv SOCKET, SCALAR, LENGTH, FLAGS
+
+出现在 `IO::Socket` 类中，但现在没有明确的文档化。
+
+=== redo
+
+* redo LABEL
+
+* redo EXPR
+
+* redo
+
+在 Perl 6 中没有发生变化。
+
+=== ref
+
+* ref EXPR
+
+被移除，例如 S29中有“如果你真的想得到类型名字，你可以使用 `$var.WHAT.perl` ，如果你真的想使用 P5
+的 ref 机制，使用 `Perl5::p5ref` ”，只不过目前 `Perl5::p5ref` 并不存在。
+
+=== rename
+
+* rename OLDNAME, NEWNAME
+
+在 Perl 6中依然可用。
+
+=== requires
+
+* require VERSION
+
+看起来 `require` 在 Perl 6的模块中可用，不过不清楚能否和版本号一起工作。
+
+=== reset
+
+* reset EXPR
+
+没有证据显示在 Perl 6中有这个函数，实际上， S29 中有它是否有良好的应用场景的疑问，我猜它已经被移除了。
+
+=== return
+
+* return EXPR
+
+虽然没有明确的文档化，但是在 Perl 6中可用。
+
+=== reverse
+
+* reverse LIST
+
+在 Perl 6中，你只可以使用 `reverse(@a)` 或者 `@a.reverse` 反转一个列表，要反转一个字符串，请使用 `.flip` 方法。
+
+=== rewinddir
+
+* rewinddir DIRHANDLE
+
+[需要更多研究]目前没有一个明显的直接等价的函数，可能在 `IO::Path` 的一些方法会提供类似的功能，但是目前不清楚是什么样子。
+
+=== rindex
+
+* rindex STR, SUBSTR, POSITION
+
+和 Perl 5中一样能工作，还可以作为方法使用，比如：`$x = "babaganush"; say $x.rindex("a"); say $x.rindex("a", 3); # 输出 5 3`。
+
+=== rmdir
+
+* rmdir FILENAME
+
+和 Perl 5中一样能工作，还可以作为方法使用。 `rmdir "Foo";` 和 `"Foo".IO.rmdir` 是等价的。
+
+=== s///
+
+* s///
+
+在 Perl 6中，正则表达式的语法有一些不同，但是置换操作是存在的。
+如果你想重写一些 Perl 5的代码，最重要的区别就是 `=~` 被智能匹配操作符 `~~` 取代，
+同样的， `!~` 被 `!~~` 取代。正则操作的选项都变成了副词并且复杂度增加，
+详见 https://docs.perl6.org/language/regexes#Adverbs[Adverbs]。
+
+=== say
+
+* say FILEHANDLE
+
+* say LIST
+
+* say
+
+`say` 可以作为一个函数使用，默认输出到标准输出。使用文件句柄替代标准输出，需要在文件句柄后加一个冒号，
+也就是 `say $fh:"Howdy!"` 。冒号是作为“调用者标记”来使用的，
+关于它的讨论见 https://design.perl6.org/S03.html#line_4019。
+你也可以使用一个方法调用 `$fh.say("Howdy！")` 。
+
+=== scalar
+
+* scalar EXPR
+
+显然，移除了。
+
+=== seek
+
+* seek FILEHANDLE, POSITION, WHENCE
+
+没有被文档记录，不过它列在 `IO::Handle` 类下。
+
+=== seekdir
+
+* seekdir DIRHANDLE, POS
+
+目前没有文档化，但是将会在关于 `IO` 的类中实现，比如 `IO::Path` 。
+
+=== select
+
+* select FILEHANDLE
+
+“[S]elect 作为一个全局的概念已经没了”，当我问到 `select` 时，我被告知 `$*OUT` 以及类似的
+变量在动态作用域内是可重写的，还有模块 `IO::Capture::Simple`（https://github.com/sergot/IO-Capture-Simple）
+ 也可以用来做和 `select` 功能相同的事情。
+
+=== sem*
+
+* semctl ID, SEMNUM, CMD, ARG
+
+* semget KEY, NSEMS, FLAGS
+
+* semop KEY, OPSTRING
+
+从核心中移处了，也许会在其它模块中找到。
+
+=== send
+
+* send SOCKET, MSG, FLAGS, TO
+
+可以在 `IO::Socket` 类中找到。
+
+=== setpgrp
+
+* setpgrp PID, PGRP
+
+不在属于核心模块，可能会在 `POSIX` 模块中找到。
+
+=== setpriority
+
+* setpriority WHICH, WHO, PRIORITY
+
+不在属于核心模块，可能会在 `POSIX` 模块中找到。
+
+=== setsocket
+
+* setsocket SOCKET, LEVEL, OPTNAME, OPTVAL
+
+没有文档化，但是可能隐藏在 `IO` 相关的模块中。
+
+=== shift
+
+* shift ARRAY
+
+* shift EXPR
+
+* shift
+
+即可以作为函数使用，又可以作为方法使用， `shift @a`  和  `@a.shift`  是等价的。
+
+=== shm*
+
+* shmctl ID, CMD, ARG
+
+* shmget KEY, SIZE, FLAGS
+
+* shmread ID, VAR, POS, SIZE
+
+* shmwrite ID, STRING, POS, SIZE
+
+从核心中移处了，也许会在其它模块中找到。
+
+=== shutdown
+
+* shutdown SOCKET, HOW
+
+没有文档化，但看起来被移到了 `IO::Socket` 模块下。
+
+=== sin
+
+* sin EXPR
+
+即可以作为函数使用，又可以作为方法使用， `sin(2)`  和  `2.sin`  是等价的。
+
+=== sleep
+
+* sleep EXPR
+
+和 Perl 5 中一样可以工作，在写本文档的时候，可以作为一个方法，但已经被废弃并在将来的移除掉。
+
+=== sockets
+
+* socket SOCKET, DOMAIN, TYPE, PROTOCOL
+
+* socketpair SOCKET1, SOCKET2, DIMAIN, TYPE, PROTOCOL
+
+没有文档化，但可能在 `IO::Socket` 类中。
+
+=== sort
+
+* sort SUBNAME LIST
+
+`sort` 在 Perl 6中依然存在，不过有一些不同。 `$a` 和 `$b` 不再是特殊变量
+（见 https://docs.perl6.org/language/5to6-perlvar[5to6-perlvar]），
+还有比较例程不在返回正数，负数，或者 0，而是 `Order::Increase` ， `Order::Decrease` 以及 `Order::Same` 对象，
+详见 https://docs.perl6.org/routine/sort[sort]。
+`sort` 也可以作为一个方法使用，换句话说， `sort(@a)` 等价于 `@a.sort` 。
+
+=== splice
+
+* splice ARRAY, OFFSET, LENGTH
+
+* splice ARRAY, OFFSET
+
+* splice ARRAY
+
+* splice EXPR, OFFSET, LENGTH, LIST
+
+* splice EXPR, OFFSET, LENGTH
+
+* splice EXPR, OFFSET
+
+* splice EXPR
+
+在 Perl 6中可用，也可以作为一个方法使用， `splice(@foo, 2, 3, <M N O P>);` 等价于 `@foo.splice(2, 3, <M N O P);` 。
+
+=== split
+
+* split /PATTERN/, EXPR, LIMIT
+
+* split /PATTERN/, EXPR
+
+* split /PATTERN/
+
+跟 Perl 5中大致相同。不过，有一些例外，要达到使用空字符串的特殊行为，你必须真正的使用空的字符串 - 即//的
+特殊情况不再视为空的字符串。
+如果你向 `split` 传递了一个正则表达式，它会使用这个正则表达式，同样字面量会作为字面量对待。
+如果你像结果中包含分隔的字符，你需要指定命名参数 `:all` ，像这样： `split(';', "a;b;c", :all); # a ; b ; c` 。
+分隔出的空的块不会像 Perl 5那样被移除，需要这个功能请查阅 `comb` ， `split` 的详细说明在
+https://docs.perl6.org/routine/split[here]。
+现在， `split` 自然也可以作为方法使用： `"a;b;c".split(';')` 。
+
+
+* split
+
+像上面描述的那样，零参数版本比如配合明确的空字符串调用，比如 `$_ = "a;b;c"; .split("").say(); # .split.say不正确` 。
+
+=== sprintf
+
+* sprintf FORMAT, LIST
+
+
+像 Perl 5一样可以工作，格式化字符现在支持这些：
+
+.format
+[cols="1,3",options="header",width="100%"]
+|======================================
+|    %  |  %字面量
+|    c  |  给定代码点代表的字符
+|    s  |  字符串
+|    d  |  有符号整数，十进制
+|    u  |  无符号整数，十进制
+|    o  |  无符号整数，八进制
+|    x  |  无符号整数，十六进制
+|    e  |  浮点数，科学计算法表示
+|    f  |  浮点数，固定精度表示
+|    g  |  浮点数，使用%e或者%f表示
+|    X  |  类似x，但是使用大写字母
+|    E  |  类似e，但是使用大写E
+|    G  |  类似g，但是使用大写E（如果适用）
+|======================================
+
+兼容以下字符：
+
+.format
+[cols="1,3",width="100%"]
+|======================================
+|    i  |  %d的同义词
+|    D  |  %ld的同义词
+|    U  |  %lu的同义词
+|    O  |  %lo的同义词
+|    F  |  %f的同义词
+|======================================
+
+Perl 5（非）兼容：
+
+.format
+[cols="1,3",width="100%"]
+|======================================
+|    n   | 产生一个运行异常
+|    p   | 产生一个运行异常
+|======================================
+
+以下用来修饰整数，他们不需要操作数，语义并不是固定的：
+
+.format
+[cols="1,4",width="100%"]
+|======================================
+|    h   | 把整数理解为本地“short”     类型（通常是int16）
+|    l   | 把整数理解为本地“long”      类型（通常是int32或者int64）
+|    ll  | 把整数理解为本地“long long” 类型（通常是int64）
+|    L   | 把整数理解为本地“long long” 类型（通常是int64）
+|    q   | 把整数理解为本地“quads”     类型（通常是int64或者更大）
+|======================================
+
+
+=== sqrt
+
+* sqrt EXPR
+
+可以作为方法和函数使用， `sqrt(4)` 以及 `4.sqrt()` 是等价的。
+
+=== srand
+
+* srand EXPR
+
+在 Perl 6中可用。
+
+=== stat
+
+* stat EXPR
+
+* stat DIRHANDLE
+
+* stat
+
+好像在 `IO` 下实现了，但是目前还不是很明确。
+
+=== state
+
+* state VARLIST
+
+* state TYPE VARLIST
+
+* state VARLIST : ATTRS
+
+* state TYPE VARLIST : ATTRS
+
+在 Perl 6中可用，见 https://docs.perl6.org/syntax/state[state]。
+
+=== study
+
+* study SCALAR
+
+* study
+
+`study` 已经不再可用了。
+
+=== sub
+
+* sub NAME BLOCK
+
+* sub NAME(PROTO) BLOCK
+
+* sub NAME : ATTRS BLOCK
+
+* sub NAME(PROTO) : ATTRS BLOCK
+
+毫无意外的，我们依然可以使用例程。你的例程还拥有一个签名，这允许你指定参数，不过，在缺少签名的情况下
+（并且只在缺少签名的情况下）， `@_` 仍然包含当前传递给函数的参数。
+所以，从理论上讲，如果从 Perl 5移植到 Perl 6你不用改变函数的样子（不过你应该考虑使用签名这一选择）。
+对于所有的信息详见 https://docs.perl6.org/language/functions[functions]。
+
+=== {underline}{underline}SUB{underline}{underline}
+
+* {underline}{underline}SUB{underline}{underline}
+
+被 `&?ROUTINE` 取代。
+
+=== substr
+
+* substr EXPR, OFFSET, LENGTH, REPLACEMENT
+
+* substr EXPR, OFFSET, LENGTH
+
+* substr EXPR, OFFSET
+
+即可以作为函数使用，又可以作为方法使用。 `substr("hola!", 1, 3)` 和 `"hola!".substr(1, 3)` 都返回“ola”。
+
+=== symlink
+
+* symlink OLDFILE, NEWFILE
+
+现在属于 `IO::Path` 的一部分。现在和 Perl 5中唯一不同是参数的顺序变了，现在是 `link($original, $linked_file)` 。
+
+=== syscall
+
+* syscall NUMBER, LIST
+
+Perl 6中不再内建此函数。很可能在某个模块当中，不过现在不明确。
+
+=== sys*
+
+* sysopen FILEHANDLE, FILENAME, MODE
+
+* sysopen FILEHANDLE, FILENAME, MODE, PERMS
+
+* sysread FILEHANDLE, SCALAR, LENGTH, OFFSET
+
+* sysread FILEHANDLE, SCALAR, LENGTH
+
+* sysseek FILEHANDLE, POSITION, WHENCE
+
+和非系统版本的函数一样，有可能在`IO`类中。
+
+=== system
+
+* system LIST
+
+* system PROGRAM LIST
+
+要实现相同的功能，你可能想使用（ https://docs.perl6.org/routine/run[run]）和（https://docs.perl6.org/routine/shell[shell routine]）。
+
+=== syswrite
+
+* syswrite FILEHANDLE, SCALAR, LENGTH, OFFSET
+
+* syswrite FILEHANDLE, SCALAR, LENGTH
+
+* syswrite FILEHANDLE, SCALAR
+
+和 `sysopen` 以及其他函数一样，被移动到了 `IO` 模块。
+
+=== tell
+
+* tell FILEHANDLE
+
+在 `IO::Handle` 里，不过现在除了提到并没有文档化。
+
+=== telldir
+
+* telldir DIRHANDLE
+
+可能在 `IO::Path` 里，不过没有文档化。
+
+=== tie
+
+* tie VARIABLE, CLASSNAME, LIST
+
+* tie VARIABLE
+
+[需要更多探究] S29表明变量类型已经被容器类型替代，不幸运的是，这意味着实际上没有此函数描述。
+
+=== time
+
+* time
+
+“返回当前时间的Int类型的表示”，虽然目前文档中没有说明它如何表示当前时间，不过看起来依然是像 Perl 5从某个特定时间开始的秒数。
+
+=== times
+
+* times
+
+不再可用。
+
+=== tr///
+
+* tr///
+
+和 Perl 5的工作模式很像，唯一的警告就是范围指定时不同了。
+你必须使用“a..z“替代“a-z”，换句话说使用 Perl的范围操作符。
+在 Perl 6中， `tr///` 有一个文档完善的方法版本，叫做 `.trans` 。
+`.trans` 接受一系列的对组： `$x.trans(['a' .. 'c'] => ['A' .. 'C'], ['d' .. 'q'] => ['D' .. 'Q'], ['r' .. 'z'] => ['R' .. 'Z']);` 。
+关于 `.trans` 的使用更详细的描述可以在 https://design.perl6.org/S05.html#Transliteration[here]找到。
+等价的 `y///` 已经被去掉了。
+
+=== truncate
+
+* truncate FILEHANDLE, LENGTH
+
+* truncate EXPR, LENGTH
+
+很大可能在 `IO` 模块中，不过没有文档化。
+
+=== uc
+
+* uc EXPR
+
+即可作为函数使用又可作为方法使用， `uc("ha")` 和 `"ha".uc` 都返回"HA"。
+
+=== ucfirst
+
+* ucfirst EXPR
+
+* ucfirst
+
+Perl 6已经废弃了 `ucfirst` ，现在首字符大写函数 https://docs.perl6.org/routine/tc[tc]可以完成你想做的事情。
+
+=== umask
+
+* umask EXPR
+
+现在是 `IO` 的一个方法， `IO.umask` 返回当前的 `umask` 。
+
+=== undef
+
+* undef EXPR
+
+Perl 6中已经没有 `undef` 了，你不可以取消定义一个函数，功能最接近的一个值是 `Nil` ，但你可能不会喜欢使用它。
+在 Perl 6中，如果你使用类似 `(undef, $file, $line) = caller;` 的语句，你将会直接得到文件名字以及
+行数而不是忽略 `caller` 的第一个结果（？？If you were using something like (undef, $file, $line) = caller;, you would just get the filename and line number directly in Perl 6 instead of discarding the first result of caller.）。
+`caller` 已经被 `callframe` 取代了，所以等价的语句即是 `($file, $line) = callframe.annotations<file line>;` 。
+
+=== unlink
+
+* unlink LIST
+
+依然可用，可以作为方法使用：`"filename".IO.unlink`。
+
+* unlink
+
+零参数（隐式参数 `$_` ）版本在 Perl 6中不可用。
+
+=== unpack
+
+* unpack TEMPLATE, EXPR
+
+* unpack TEMPLATE
+
+在 Perl 6中可用，模板设置部分比起 Perl 5中限制更多了，目前的文档可以在 https://docs.perl6.org/routine/unpack[这里]找到。
+
+=== unshift
+
+* unshift ARRAY, LIST
+
+* unshift EXPR, LIST
+
+在 Perl 6中可用，可以作为方法使用。 `unshift(@a, "blah")` 等价于 `@a.unshift("blah")`。
+
+=== untie
+
+* untie VARIABLE
+
+[需要更多探究] 根据S29，方法中对变量用来绑定的操作貌似被容器类型取代了，这变的不是很明确所以我写下了 `tie` 这一小节。
+
+=== use
+
+* use Module VERSION LIST
+
+* use Module VERSION
+
+* use Module LIST
+
+* use Module
+
+* use VERSION
+
+在 Perl 5中，脚本的运行可能需要一个最低的 Perl 执行文件版本。在 Perl 6中，可以指定被不同 Perl 6可执行文件遵循的规范的版本（比如 `6.c` ）。
+
+=== utime
+
+* utime LIST
+
+根据S32来看已经移除了，并且建议你参考 `Path.times` 。
+不幸运的是，并没有 `Path.times` 这个方法，可能以后 `IO::Path` 中会有等价的方法，不过现在确实没有。
+
+=== values
+
+* values HASH
+
+* values ARRAY
+
+* values EXPR
+
+在 Perl 6中可用，也可以作为方法使用， `values %hash` 等价于 `%hash.values` 。
+
+=== vec
+
+* vec EXPR, OFFSET, BITS
+
+S29说，应该使用声明 `bit` 、 `uint2` 、 `uint4` 等等的 `buffer/array` 来取代 `vec` ，虽然并不明确，不过确实开始实现这功能了。
+
+=== wait
+
+* wait
+
+[需要更多探究] 目前尚不明确被谁取代了，在 `Supply` 中有一个方法 `wait` ， `Channel` 以及 `Promise` 中
+有一个方法 `await` ，对这些函数跟 Perl 5中的 `wait` 关联并不明确。
+
+=== waitpid
+
+* waitpid PID, FLAGS
+
+像 `wait` 一样，这个函数的安排并不明确。
+
+=== wantarray
+
+* wantarray
+
+因为 https://docs.perl6.org/language/faq#Why_is_wantarray_or_want_gone%3F_Can_I_return_different_things_in_different_contexts%3F[这些原因]，
+Perl 6中m没有 `wantarray` 。
+
+这里有几种简单的方式填补许多需要用到 `wantarray` 的地方。
+
+首先，因为 Perl 6并不需要特殊的引用语法把 `List` 或者 `Array` 包装成 `Scalar` ，简单的返回一个列表只需要：
+
+[source, perl6]
+--------------------------
+sub listofstuff {
+    return 1, 2, 3;
+}
+my $a = listofstuff();
+print $a;                       # 打印 "123"
+print join('<', listofstuff()); # 打印 "1<2<3"
+--------------------------
+
+一个普遍的应用就是提供一个行或者元素的数组，简单的打印数组输出一个优美的字符串。、
+你可以混入一个 `.Str` 方法来达到这个目的：
+
+[source, perl6]
+--------------------------
+sub prettylist(*@origlist) {
+    @origlist but role {
+        method Str { self.join("<")  }
+    }
+}
+print prettylist(1, 2, 3);             # 打印 "1<2<3"
+print join(">", prettylist(1, 2, 3));   # 打印 "1>2>3"
+--------------------------
+
+在上面的例子中，返回的列表可能是惰性的， `.Str` 方法将不会被调用直到字符串化，所以并不会有额外的工作产生没有请求到的东西。
+
+另一种情况就是需要创建一个可以在空上下文使用，但是赋值时会拷贝的调整器（mutators）。
+通常情况下在 Perl 6中不要这样做，因为你可以通过使用 `.=` 运算符快速的完成产生拷贝(copy-producing)的方法到调整器的转换：
+
+[source, perl6]
+--------------------------
+my $a = "foo\n";
+$a.ords.say;        # 打印 "(102, 111, 111, 10)"
+$a.=chomp;
+$a.ords.say;        # 打印 "(102, 111, 111)"
+--------------------------
+
+但是如果你想在两种操作下使用同一个函数名称，大多数情况下你可以混入一个在结果发现自己处于空上下文
+的时会自动调用的 `.sink` 方法来完成，虽然有一些警告你，所以，并不建议你这么做：
+[source, perl6]
+--------------------------
+multi sub increment($b is rw) {
+    ($b + 1) does role { method sink { $b++ }) }
+}
+multi sub increment($b) {
+    ($b + 1)
+}
+my $a = 1;
+increment($a);
+say $a;                 # 打印 "2"
+my $b = increment($a);
+say $a, $b;             # 打印 "23"
+# 用户将会意识到这之后他们不应该意外sink一个存储的值，尽管这需要一些功夫
+sub identity($c is rw) { $c };
+$a = 1;
+$b = increment($a);
+identity($b);
+$a.say;                  # 打印 "2" #！！！！
+--------------------------
+
+=== warn
+
+* warn LIST
+
+`warn` 抛出一个异常。简单的将信息打印到 `$*ERR` 中，你可以使用 `note` 函数。
+ 查看更多的异常，请见 https://docs.perl6.org/language/exceptions[Exceptions]。
+
+=== write
+
+* write FILEHANDLE
+
+* write EXPR
+
+* write
+
+格式化输出以及移除了，所以函数在Perl 6中不再可用。
+
+=== y///
+
+* y///
+
+`tr///` 的同义词已经移除了，对于此功能请参考 `tr///` 。
