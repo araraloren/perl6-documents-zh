@@ -1,0 +1,13 @@
+= perl6-documents-zh
+
+perl6 文档中文版 - perl 6 document translation for chinese
+
+* link:language/5to6-nutshell.adoc[5to6-nutshell]
+
+* link:language/5to6-perlfunc.adoc[5to6-perlfunc]
+
+* link:language/5to6-perlop.adoc[5to6-perlop]
+
+* link:language/5to6-perlsyn.adoc[5to6-perlsyn]
+
+* link:language/5to6-perlvar.adoc[5to6-perlvar]
