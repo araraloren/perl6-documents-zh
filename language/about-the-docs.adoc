@@ -1,0 +1,128 @@
+= 关于文档
+:toc-title: 目录
+:description: 元文档
+:keywords: perl6, perl 6, perl 6 document
+:Email: blackcatoverwall@gmail.com
+:Revision: 1.0
+:icons: font
+:source-highlighter: pygments
+:source-language: perl6
+:pygments-linenums-mode: table
+:toc: left
+:doctype: book
+:lang: zh
+
+这个文档搜集了关于正在进行中的编程语言 Perl 6 文档的一些目标：
+全面的、易于使用、易于查找以及对初学者和老手都适用。
+
+文档的 HTML 版本可以访问 https://docs.perl6.org/。
+
+此文档的官方的源码在 https://github.com/perl6/doc[perl6/doc on Github]。
+
+这个特定的文档是 https://github.com/perl6/doc/blob/master/CONTRIBUTING.md[CONTRIBUTING on GitHub]
+的一个快速预览版本。
+这个文档也提供了关于编写可转换为 HTML以及其他格式的 Perl 6 Pod 文件的简短介绍。
+
+= 结构
+
+所有的文档都以 Perl 6 Pod 的格式编写，保存在目录 `doc/` 以及子目录 `doc/Language`、`doc/Type` 内。
+这些文件被当作术语或者文档的集合处理，然后链接到一起。
+
+= 从 Pod 生成 HTML
+
+想要从 Pod 文件生成 HTML，你首先需要：
+
+* 最近版本的 Rakudo Perl 6 编译器。
+* Perl 6 的模块 Pod::To::HTML、Pod::To::BigPage 以及 URI::Escape（可以通过 https://github.com/ugexe/zef[zef] 安装） 。
+* 可选的：http://graphviz.org/[GraphViz]，可以用来创建 Perl 6 类型之间的关系图
+* 可选的：https://github.com/atom/highlights[Atom Highlights] 以及 https://atom.io/packages/language-perl6[language-perl6]，用来支持语法高亮
+
+要在 `html/` 文件夹下生成文档，请执行：
+[source, shell]
+---------------------------
+perl6 htmlify.p6
+---------------------------
+
+要作为 web 主机提供文档服务，你需要安装 Perl 5 以及 Mojolicious::Lite，然后执行：
+[source, shell]
+---------------------------
+perl app.pl daemon
+---------------------------
+
+= 贡献
+
+这个文档是 Perl 6 Pod 格式写作的。
+
+要对 Perl 6 Pod 有一个简单了解，请参考 https://docs.perl6.org/language/pod[Perl 6 Pod]。
+
+要了解 Perl 6 Pod 格式的全部细节，请参考 https://design.perl6.org/S26.html[Synopsis 26, Documentation]。
+
+== 增加定义
+
+文档可以直接使用 Pod 指令 `=headN` 来定义，其中 `N` 大于 0（比如，`=head1`、`=head2`...）。
+
+跟随这指令后面的所有段落和代码块，直到相同等级的下一个指令之前，都被视为文档的一部分。所以，在
+
+[source, pod]
+------------------
+=head2 My Definition
+
+Some Paragraphs, followed by some code:
+
+    my Code $example = "amazing";
+
+Mind === blown
+
+=head3 Minor details about My Definition
+
+It's fantastic
+
+=head2 And now, for something compeletly different
+
+...
+------------------
+
+文档 __My Definition__ 的定义直到 `=head2 And now...`。
+
+一个文档可能包含其他的文档。比如，类的文档通常会包含类中实现的方法的文档。
+
+定义必须是下列格式中的其中之一，才能被识别为名字叫做Z的文档开头。首先是文档源代码：
+
+[source, pod]
+------------------------
+=item X<C<How to use the Z infix> | infix,Z> (This a special case, which
+is always considered a definition)
+
+=item C<The Z Infix>
+
+=item B<The C<Z> Infix>
+
+=item C<Infix Z>
+
+=item B<Infix C<Z>>
+
+=item C<trait is cached> (A special case for the L<trait|/language/functions#Traits> documentables)
+------------------------
+
+下面是生成的结果页面：
+
+* [blue]#How to use the Z infix# (This is a special case, which is always considered a definition)
+* [gray]#The Z Infix#
+* [black]#The Z Infix#
+* [gray]#Infix Z#
+* [black]#Infix Z#
+* [gray]#trait is cached# (A special case for the https://docs.perl6.org/language/functions#Traits[trait] documentables)
+
+这样这些项就可以在HTML文档中搜索了。
+
+强调可以使用加粗（**B<>**）或者斜体（**I<>**）以及增加或者去掉代码格式化（**C<>**）来完成。
+由于当前解析器的限制，你需要通过使用**X<>**来格式其它代码，比如：
+
+    =item X<B<foo>|foo> a fancy subroutine
+
+生成效果：
+
+    * [black]#foo# a fancy subroutine
+
+注意管道（‘|’）后面的文字是没有格式的，还有就是**C<>**会完全保留空格，
+并将所有东西示为文本。
