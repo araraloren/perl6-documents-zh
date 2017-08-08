@@ -1,0 +1,164 @@
+= 类与对象
+:toc-title: 目录
+:description: 在 Perl6 中创建使用类的指南
+:keywords: perl6, perl 6, perl 6 document
+:Email: blackcatoverwall@gmail.com
+:Revision: 1.0
+:icons: font
+:source-highlighter: pygments
+:source-language: perl6
+:pygments-linenums-mode: table
+:toc: left
+:doctype: book
+:lang: zh
+
+`Perl6` 有丰富的内置语法用来定义以及使用类。
+
+默认构造函数允许你在创建对象时设置属性的值：
+
+[source,perl6]
+----------------
+class Point {
+    has Int $.x;
+    has Int $.y;
+}
+ 
+class Rectangle {
+    has Point $.lower;
+    has Point $.upper;
+ 
+    method area() returns Int {
+        ($!upper.x - $!lower.x) * ( $!upper.y - $!lower.y);
+    }
+}
+ 
+# 从两个 Points 创建一个新的 Rectangle
+my $r = Rectangle.new(lower => Point.new(x => 0, y => 0), upper => Point.new(x => 10, y => 10));
+ 
+say $r.area(); # 输出： «100␤» 
+----------------
+你也可以提供自己的构造函数以及构建（`build`）实现。
+以下代码更详细的展示了依赖关系处理在 `Perl6` 中的模样，它含有自定义构造函数（`constructors`）、
+私有和公有属性（`attribute`）、方法（`method`）以及各种样式的签名（`signature`）。
+廖廖几行代码，但是结果很有意思。
+
+[source,perl6]
+------------------------------
+class Task {
+    has      &!callback;
+    has Task @!dependencies;
+    has Bool $.done;
+ 
+    # 通常不需要写
+    # BUILD 等价与其他语言中的构造函数
+    method new(&callback, *@dependencies) {
+        return self.bless(:&callback, :@dependencies);
+    }
+ 
+    submethod BUILD(:&!callback, :@!dependencies) { }
+ 
+    method add-dependency(Task $dependency) {
+        push @!dependencies, $dependency;
+    }
+ 
+    method perform() {
+        unless $!done {
+            .perform() for @!dependencies;
+            &!callback();
+            $!done = True;
+        }
+    }
+}
+ 
+my $eat =
+    Task.new({ say 'eating dinner. NOM!' },
+        Task.new({ say 'making dinner' },
+            Task.new({ say 'buying food' },
+                Task.new({ say 'making some money' }),
+                Task.new({ say 'going to the store' })
+            ),
+            Task.new({ say 'cleaning kitchen' })
+        )
+    );
+ 
+$eat.perform();
+------------------------------
+
+== 使用 `class`
+
+`Perl6` 和其他多数语言一样，使用 `class` 关键字定义类。
+代码块可能包含任意的代码或者其他的代码块，而类通常只会包含状态以及行为声明。
+示例代码使用 `has` 定义了属性（状态），并通过 `method` 关键字定义了行为。
+
+类的声明创建了一个新的类型，默认情况下只在当前包可见（如同一个使用 `our` 声明的变量）。
+这个类型对象是这个类的“空实例”，比如，像 `Int` 和 `Str` 这样的类型是 `Perl6`内置类之一的类型对象。
+上面的例子中使用了类名字 `Task`，以便之后代码能通过它引用这个类，例如通过调用 `new`
+方法创建新的实例。
+
+你可以使用 `.DEFINE` 方法来区分你拥有的是一个实例还是一个类型对象：
+[source,perl6]
+---------------------------
+say Int.DEFINITE; # OUTPUT: «False␤» (类型对象) 
+say 426.DEFINITE; # OUTPUT: «True␤»  (类的实例) 
+ 
+class Foo {};
+say Foo.DEFINITE;     # OUTPUT: «False␤» (类型对象) 
+say Foo.new.DEFINITE; # OUTPUT: «True␤»  (实例) 
+---------------------------
+
+== 状态
+
+类中的前三行代码都是属性（在其他语言叫做__字段__或者__实例存储__）的声明。
+就像 `my` 变量无法在超出它声明域以外访问一样，属性在类外无法访问，封装性是
+面向对象设计的关键原则之一。
+
+第一个声明指定了一个回调（`callback`） - 用来表示一段完成指定任务的代码的对象的实例存储：
+
+`has &!callback;`
+
+`Sigil` `&` 表明这个属性表示某个可执行的东西，`!` 是一个 __twigil__或者说 第二 `sigil`，
+`twigil` 是变量名字的一部分。
+当前情况下，`!` 强调这个属性对于类来说是私有的。
+
+第二个声明依然使用了私有的 `twigil`：
+
+`has Task @!dependencies;`
+
+不过，这个属性表示项的数组，所以它使用了 `@` `sigil`。
+这些项指定了在当前任务执行之前必须完成的任务，此外，属性的类型声明表明数组只可以存储 `Task` 类（或者它的子类）的实例。
+
+第三个属性表示当前任务的完成状态：
+
+`has Bool $.done;`
+
+这个标量（使用 `$` `sigil`）属性的类型是 `Bool`，没有使用 `!` `twigil`，而是 `.`。
+`Perl6`在强制属性的封装时，同时允许你使用访问器方法，将 `!` 替换成 `.` 就会同时声明了属性
+`$!done` 和名字为 `done` 的访问器方法。
+如果你写了以下代码：
+[source,perl6]
+--------------------
+has Bool $!done;
+method done() { return $!done; }
+--------------------
+需要注意的是这和其它一些语言允许声明公共属性不同，不用手动定义方法，你真的同时拥有了私有属性和方法。
+如果你需要更复杂的逻辑而不是直接返回值，你还定义自己的访问器方法。
+
+注意使用 `.` `twigil` 只会创建支持对属性的只读访问的方法，如果对象的使用者可以重置任务的状态（可能是为了再执行一次），你可以改变你的属性声明：
+
+`has Bool $.done is rw;`
+
+`Trait` `is rw` 会使得生成的方法返回外部可以修改属性值的值。
+
+你还可以为属性提供默认值（有无访问器不影响默认值）：
+
+`has Bool $.done = False;`
+
+这个赋值会在对象构建的时候执行，右边的值将会在那时候求值，并且可以引用之前声明的属性：
+[source,perl6]
+--------------------
+has Task @!dependencies;
+has $.ready = not @!dependencies;
+--------------------
+
+== 静态字段？
+
