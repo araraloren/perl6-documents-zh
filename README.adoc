@@ -13,3 +13,5 @@ perl6 文档中文版 - perl 6 document translation for chinese
 * link:language/5to6-perlvar.adoc[5to6-perlvar]
 
 * link:language/about-the-docs.adoc[about-the-docs]
+
+* link:language/class-and-objects.adoc[class-and-objects(WIP)]
