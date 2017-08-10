@@ -162,3 +162,156 @@ has $.ready = not @!dependencies;
 
 == 静态字段？
 
+尽管 `Perl6` 没有 **static** 关键字，任何一个模块可以做的事情类都可以做，所以使用作用域变量看起来是一个好注意。
+
+[source,perl6]
+--------------------
+class Singleton {
+    my Singleton $instance;
+    method new {!!!}
+    submethod instance {
+        $instance = Singleton.bless unless $instance;
+        $instance;
+    }
+}
+--------------------
+
+使用 `my` 或者 `our` 定义类的属性也可以在声明时就初始化，不过在这里没实现的是单例模式，
+这个对象必须在第一次使用时创建。
+很难保证类属性会在什么时候被初始化，因为它可以在编译期、运行期或者同时跨两个时期，
+尤其是在使用 `use` 导入类的时候（译：导入引用的类？）。
+
+[source,perl6]
+------------------
+class HaveStaticAttr {
+      my Foo $.foo = some_complicated_subroutine;
+}
+------------------
+
+类属性也可以使用第二 `sigil` - 与对象属性相同的风格 - 如果属性是公共的将会自动生成一个只读的访问器。
+
+== 方法
+
+正如属性给予了对象状态，方法给予对象行为。
+让我们先暂时忽略 `new` 方法，这是一个特别的方法。
+思考第二个方法 `add-dependency`，它将新的 `task` 加入到依赖列表。
+
+[source,perl6]
+------------------
+method add-dependency(Task $dependency) {
+    push @!dependencies, $dependency;
+}
+------------------
+
+这多多少少看起来像是一个 `sub` 声明，然而它们之间有两个重要的不同点。
+首先，声明的**例程**作为方法会加入到当前类的方法列表中，这样任意一个 `Task` 的实例都可以使用方法调用运算符 `.` 调用该方法。
+其次，方法调用会将调用者（`invocant`）放入特殊变量 `self`。
+
+这个方法接受传递的参数 - 必须是类 `Task` 的实例 - 然后将它 **加入** 到调用者的 `@!dependencies` 属性中。
+
+方法 `perform`  包含着依赖处理的主体逻辑：
+[source,perl6]
+------------------
+method perform() {
+    unless $!done {
+        .perform() for @!dependencies;
+        &!callback();
+        $!done = True;
+    }
+}
+------------------
+
+它不接受参数，而是使用对象的属性。
+首先，它会通过检测 `$!done` 的值确认当前任务是否已经完成，如果已完成，那就什么也不做。
+
+否则，它就会使用 `for` 遍历属性 `@!dependenceies` 来执行所有依赖的任务。
+迭代操作会将每一项 - 每一项都是 `Task` 对象 - 放入到主题变量（`topic variable`）`$_`，
+使用方法调用运算符 `.` 省略调用者时将会使用当前的主题变量作为调用者。
+这样，迭代操作对  `@!dependenceies` 中的每一个 `Task` 对象调用了 `.perform` 方法。
+
+当所有依赖完成之后，是时候执行 `&!callback` 完成当前 `Task` 的任务了，这里使用圆括号来完成调用。
+最后，将 `$!done` 的值设置为 `True`，这样之后的对当前对象 `perform` 的调用（比如当前 `Task` 是其他 `Task` 的一个依赖）就不会重复执行任务了。
+
+== 私有方法
+
+像属性一样，方法也可以是私有的。
+使用 `!` 作为前缀标记声明一个私有方法，它们使用 `self!` 加上方法名字来调用。
+一个类调用另一个类的私有方法叫做该类被被调用类信任（`trust`），信任关系可以用 `trust` 关键字来完成，
+需要注意的是被信任的类必须已经声明。
+调用其他类的私有方法需要它的一个实例以及完全限定（`fully qualified`）的方法名。
+信任也会允许私有属性的访问。
+
+[source,perl6]
+----------------
+class B {...}
+ 
+class C {
+    trusts B;
+    has $!hidden = 'invisible';
+    method !not-yours () { say 'hidden' }
+    method yours-to-use () {
+        say $!hidden;
+        self!not-yours();
+    }
+}
+ 
+class B {
+    method i-am-trusted () {
+        my C $c.=new;
+        $c!C::not-yours();
+    }
+}
+ 
+C.new.yours-to-use(); # 这个方法的上下文是全局（GLOBAL），不被 C 信任
+B.new.i-am-trusted();
+----------------
+
+信任关系不可以被继承，要将全局名称空间加入信任列表，可以信任伪包（`pseudo package`）`GLOBAL`。
+
+== 构造函数
+
+在构造函数这方面，`Perl6` 相对其他语言相当自由，构造函数是任何返回当前类实例的任何东西。
+此外，构造函数只是普通的方法，你拥有一个继承自 `Mu` 的默认构造函数 `new`，不过，如同示例一样，你可以重写它：
+
+[source,perl6]
+---------------
+method new(&callback, *@dependencies) {
+    return self.bless(:&callback, :@dependencies);
+}
+---------------
+
+`Perl6` 的构造函数不同于其他语言，比如 `C#` `Java`，它们在一个已经被魔法般创建的对象上设置状态，`Perl6`
+的构造函数自己创建对象。
+最简单的途径就是调用 `bless` 方法，它也是从 `Mu`中继承而来，`bless`方法接受一系列的命名参数，
+用于设置属性的初始值。
+
+例子中的构造函数将位置参数转换为命名参数，这样类就可以向其用户提供一个良好的构造函数。
+第一个参数是回调函数（用来执行任务的东西），剩余参数则都是依赖的 `Task` 实例，构造函数捕获所有的依赖提供给
+`@dependenceies` 数组，之后作为命名参数传递给 `bless`（注意 `:&callback` 使用了变量名字 - 去掉 `sigil` - 作为参数的名字）。
+
+私有属性在任何时候都是私有的，这意味着 `bless` 不会被允许直接绑定 `&!callback` 和 `@!dependenceies`。
+要做到这个，我们需要重写 `BUILD` 子方法，它将会在创建对象时被 `bless` 调用：
+
+`submethod BUILD(:&!callback, :@!dependencies) { }`
+
+因为 `BUILD` 在当前新创建的对象上下文执行，它被允许手动操作这些私有属性。
+这里的技巧是私有属性（`&!callback` 和 `@!dependenceies`）被用做 `BUILD` 的参数的绑定目标，
+零样板初始化（`Zero-boilerplate initialization!`）。
+更多信息请参考 https://docs.perl6.org/language/objects#Object_Construction[objects]。
+
+`BUILD` 用来初始化所有的私有属性以及处理默认值：
+
+[source,perl6]
+---------------------
+has &!callback;
+has @!dependencies;
+has Bool ($.done, $.ready);
+submethod BUILD(
+        :&!callback,
+        :@!dependencies,
+        :$!done = False,
+        :$!ready = not @!dependencies
+    ) { }
+---------------------
+
+关于对象构造函数以及属性初始化更多作用请参考 https://docs.perl6.org/language/objects#Object_Construction[Object Construction]。
