@@ -143,6 +143,8 @@ method done() { return $!done; }
 需要注意的是这和其它一些语言允许声明公共属性不同，不用手动定义方法，你真的同时拥有了私有属性和方法。
 如果你需要更复杂的逻辑而不是直接返回值，你还定义自己的访问器方法。
 
+NOTE: 访问器方法只有在没有同名方法的时候才会生成（`only generate when missing one`）。
+
 注意使用 `.` `twigil` 只会创建支持对属性的只读访问的方法，如果对象的使用者可以重置任务的状态（可能是为了再执行一次），你可以改变你的属性声明：
 
 `has Bool $.done is rw;`
@@ -315,3 +317,124 @@ submethod BUILD(
 ---------------------
 
 关于对象构造函数以及属性初始化更多作用请参考 https://docs.perl6.org/language/objects#Object_Construction[Object Construction]。
+
+== 使用类
+
+在创建完类之后，你就可以创建类的实例了，自定义的构造函数提供了一种非常简单的方式声明任务和它的依赖。
+要创建一个单独的没有依赖的任务：
+
+[source,perl6]
+------------------------
+my $eat = Task.new({say 'eating dinner. NOW1' });
+------------------------
+
+前面的小节已经说明声明一个类 `Task` 将会把它的类型对象加入到当前的命名空间，这个类型对象是类的“空的实例”，更具体点就是没有任何状态的实例。
+你可以调用它的方法，但是不要尝试访问任何的状态，`new` 就是一个例子，它创建一个新的对象而不是修改或者访问当前存在的对象。
+
+不幸的是，天下不会掉馅饼，晚餐任务依赖其他任务：
+
+[source,perl6]
+--------------------------
+my $eat =
+    Task.new({ say 'eating dinner. NOM!' },
+        Task.new({ say 'making dinner' },
+            Task.new({ say 'buying food' },
+                Task.new({ say 'making some money' }),
+                Task.new({ say 'going to the store' })
+            ),
+            Task.new({ say 'cleaning kitchen' })
+        )
+    );
+--------------------------
+
+注意自定义的构造函数和合理的空白是如何让依赖清晰起来的。
+
+最后，`perform` 的调用会递归的顺序调用其他依赖的 `perform` 方法，输出以下内容：
+
+    making some money
+    going to the store
+    buying food
+    cleaning kitchen
+    making dinner
+    eating dinner. NOM!
+
+== 继承
+
+面向对象提供了继承的概念来作为代码重用的机制之一，`Perl6` 支持一个类继承自另一个或者多个类。
+当一个类继承自另一个类的时候，它会通知方法调度器（`method dispatcher`）沿着继承链寻找方法，这种情况适用于
+通过 `method` 关键字声明的方法以及形如属性访问器的自动生成方法。
+
+[source,perl6]
+---------------------------
+class Employee {
+    has $.salary;
+ 
+    method pay() {
+        say "Here is \$$.salary";
+    }
+}
+ 
+class Programmer is Employee {
+    has @.known_languages is rw;
+    has $.favorite_editor;
+ 
+    method code_to_solve( $problem ) {
+        say "Solving $problem using $.favorite_editor in "
+        ~ $.known_languages[0] ~ '.';
+    }
+}
+---------------------------
+
+现在，`Programmer` 的任何对象都可以访问定义在 `Employee` 内方法和访问器，尽管它们由 `Programmer` 类生成：
+
+[source,perl6]
+--------------------------
+my $programmer = Programmer.new(
+    salary => 100_000,
+    known_languages => <Perl5 Perl6 Erlang C++>,
+    favorite_editor => 'vim'
+);
+ 
+$programmer.code_to_solve('halting problem');
+$programmer.pay();
+--------------------------
+
+=== 重写继承的方法
+
+无疑，类可以通过自定义重写继承自的父类的方法和属性，下面的例子示范了 `Baker` 如何重写继承自 `Cook` 的方法：
+
+[source,perl6]
+---------------------------
+class Cook is Employee {
+    has @.utensils  is rw;
+    has @.cookbooks is rw;
+ 
+    method cook( $food ) {
+        say "Cooking $food";
+    }
+ 
+    method clean_utensils {
+        say "Cleaning $_" for @.utensils;
+    }
+}
+ 
+class Baker is Cook {
+    method cook( $confection ) {
+        say "Baking a tasty $confection";
+    }
+}
+ 
+my $cook = Cook.new(
+    utensils => <spoon ladle knife pan>,
+    cookbooks => 'The Joy of Cooking',
+    salary => 40000);
+ 
+$cook.cook( 'pizza' ); # OUTPUT: «Cooking pizza␤» 
+ 
+my $baker = Baker.new(
+    utensils => 'self cleaning oven',
+    cookbooks => "The Baker's Apprentice",
+    salary => 50000);
+ 
+$baker.cook('brioche'); # OUTPUT: «Baking a tasty brioche␤» 
+---------------------------
