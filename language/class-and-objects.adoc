@@ -429,12 +429,119 @@ my $cook = Cook.new(
     cookbooks => 'The Joy of Cooking',
     salary => 40000);
  
-$cook.cook( 'pizza' ); # OUTPUT: «Cooking pizza␤» 
+$cook.cook( 'pizza' ); # 输出： «Cooking pizza␤» 
  
 my $baker = Baker.new(
     utensils => 'self cleaning oven',
     cookbooks => "The Baker's Apprentice",
     salary => 50000);
  
-$baker.cook('brioche'); # OUTPUT: «Baking a tasty brioche␤» 
+$baker.cook('brioche'); # 输出： «Baking a tasty brioche␤» 
 ---------------------------
+
+因为调度器会在它移动到父类之前看到 `Baker` 中的 `cook` 方法，`Baker` 中的 `cook` 方法将会被调用。
+
+要访问继承链中的方法，请使用 https://docs.perl6.org/language/functions#Re-dispatching[re-disptach] 或者     https://docs.perl6.org/type/Metamodel::ClassHOW#method_can[MOP] 。
+
+=== 多继承
+
+正如之前提到的那样，一个类可以继承自多个父类。
+当使用多继承时，调度器查找方法时会查找所有的父类。
+`Perl6` 使用 **C3** 算法将多继承层次结构线性化， 这是对 `Perl5` 's 的处理多继承的默认方法（深度优先搜索）的重大改进。
+
+[source,perl6]
+-------------------
+class GeekCook is Programmer is Cook {
+    method new( *%params ) {
+        push( %params<cookbooks>, "Cooking for Geeks" );
+        return self.bless(|%params);
+    }
+}
+ 
+my $geek = GeekCook.new(
+    books           => 'Learning Perl 6',
+    utensils        => ('stainless steel pot', 'knife', 'calibrated oven'),
+    favorite_editor => 'MacVim',
+    known_languages => <Perl6>
+);
+ 
+$geek.cook('pizza');
+$geek.code_to_solve('P =? NP');
+-------------------
+
+现在，对 `Programmer` 以及 `Cook` 可用的所有方法也对 `GeekCook` 可用。
+
+虽然多继承是一个有用的概念，偶尔会用到，但是更重要是知道有更多的面向对象的概念。
+当要使用多继承的时候，考虑设计是否可以使用 `roles` 来实现更好的设计是一个良好的习惯，这通常更加安全，
+因为它们强制类的作者显式的解决方法名字冲突。更多信息请参考
+https://docs.perl6.org/language/objects#Roles[Roles]
+
+=== `also` 声明符
+
+类的继承列表可以通过 `also` 并使用 `trait` `is` 写在类的内部，这同样适用于用于角色组合（`role composition`）的 `trait` `does`：
+
+[source,perl6]
+--------------------------
+class GeekCook {
+    also is Programmer;
+    also is Cook;
+    # ... 
+}
+ 
+role A {};
+role B {};
+class C { also does A; also does B }
+--------------------------
+
+== 内省
+
+内省是在你的程序中收集对象信息的过程，不是通过阅读源码，而是通过查询对象某些属性，比如它的类型。
+
+给予我们一个对象 `$o` 以及之前小节定义的类，我们可以问它几个问题：
+
+[source,perl6]
+--------------------------
+if $o ~~ Employee { say "It's an employee" };
+if $o ~~ GeekCook { say "It's a geeky cook" };
+say $o.WHAT;
+say $o.perl;
+say $o.^methods(:local)».name.join(', ');
+say $o.^name;
+--------------------------
+
+这将会输出：
+
+    It's an employee
+    (Programmer)
+    Programmer.new(known_languages => ["Perl", "Python", "Pascal"],
+            favorite_editor => "gvim", salary => "too small")
+    code_to_solve, known_languages, favorite_editor
+    Programmer
+    
+前两个测试使用智能匹配（`smart-match`）匹配类名，如果对象属于该类或者该类的子类，将会返回 `True`。
+所以问题中的 `$o` 属于类 `Employee` 或者其子类，但不属于 `GeekCook`。
+
+`.WHAT` 方法返回和当前对象 `$o` 关联的类型对象，这将会告诉我们它的真实类型，在这里是： `Programmer`。
+
+`$o.perl` 返回一串可以执行的 `Perl` 代码，这可以重新生成原始对象 `$o`，
+虽然并不是所有的情况下都能很好的工作，但在调试简单对象时候很有用。
+footnote:[比如闭包就不能简单的通过这种方式重新生成，如果你不知道闭包也没关系。还有目前的实现也无法很好的处理循环的数据结构，但有些东西 `.perl` 处理的很好];
+
+`$o.^methods(:local)` 将会产生可以在 `$o` 上调用的 https://docs.perl6.org/type/Method[方法]，
+命名参数 `:local` 将返回的方法限制为在 `Programmer` 类内定义的，排除了继承的方法。
+
+使用 `.^` 代替 `.` 调用方法的语法意味着方法的调用将会作用于元类，它是一个管理 `Programmer` 或者其他你感兴趣的类 的属性的类。元类还有其他内省的方式：
+
+[source,perl6]
+--------------------------
+say $o.^attributes.join(', ');
+say $o.^parents.map({ $_.^name }).join(', ');
+--------------------------
+
+最终，`$o.^name` 在元对象上调用 `name` 方法，毫不意外的返回类的名字。
+
+内省对于调试和学习新的语言或者库非常有用，当一个函数或者方法返回你不知道的类型时，
+使用 `.WHAT` 查询它的类型；使用 `.perl` 查看构造的方法等等，这样你将会对于返回的数据
+有一个很好的认识。使用 `.^methods` 你可以知道可以对这个类做什么。
+
+不过它们还有其他的功能：一个可以将对象序列化的例程比如知道类的属性，这也可以通过内省知道。
